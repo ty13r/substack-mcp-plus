@@ -1,0 +1,21 @@
+{
+  "name": "substack-mcp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "mcpserver",
+    "substack",
+    "ai"
+  ],
+  "author": {
+    "name": "Marco Moauro",
+    "email": "marcomoauro@hotmail.it"
+  },
+  "type": "module",
+  "license": "MIT"
+}

@@ -1,0 +1,12 @@
+tmp/
+.idea/
+.vscode/
+node_modules/
+coverage/
+docs/index.html
+docs/openapi*.json
+.cache/
+.DS_Store
+/yarn-error.log
+/yarn*/
+.env*
