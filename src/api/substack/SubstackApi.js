@@ -6,14 +6,13 @@ export default class SubstackApi {
                 password = null,
                 base_url = null,
                 publication_url = null,
-                auth_token = null,
-                auth_legacy_token = null,
+                auth_token = null
               }) {
     this.email = email;
     this.password = password;
     this.base_url = base_url || 'https://substack.com/api/v1';
     this.publication_url = new URL('api/v1', publication_url).toString();
-    this.auth_cookie = `substack.sid=${auth_token}; connect.sid=${auth_legacy_token};`
+    this.auth_cookie = `substack.sid=${auth_token}; connect.sid=${auth_token};`
 
     this.session = axios;
   }
