@@ -8,11 +8,6 @@ import {z} from "zod";
 import {zodToJsonSchema} from "zod-to-json-schema";
 import {createDraftPostSchema, createDraftPostHandler} from "./tools/create_draft_post.js";
 
-const SESSION_ID = process.env.SESSION_ID;
-if (!SESSION_ID) {
-  throw new Error("SESSION_ID must be set");
-}
-
 // Create an MCP server
 const server = new Server({
     name: "Substack MCP",
@@ -21,10 +16,15 @@ const server = new Server({
   {
     capabilities: {
       tools: {},
-      resources: {}
+      resources: {},
+      logging: {}
     },
   });
 
+// check envs
+if (!process.env.SUBSTACK_PUBLICATION_URL || !process.env.SUBSTACK_SESSION_TOKEN || !process.env.SUBSTACK_USER_ID) {
+  throw new Error("SUBSTACK_PUBLICATION_URL, SUBSTACK_SESSION_TOKEN and SUBSTACK_USER_ID must be set");
+}
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
@@ -63,7 +63,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 
 const transport = new StdioServerTransport();
-server.connect(transport).catch((error) => {
-  console.error("Server error:", error);
+server.connect(transport).catch(() => {
   process.exit(1);
 });

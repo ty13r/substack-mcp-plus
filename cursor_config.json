@@ -1,4 +1,4 @@
-{
+[{
   "mcpServers": {
     "substack-api": {
       "command": "node",
@@ -8,4 +8,25 @@
       }
     }
   }
-}
+},
+{
+  "mcpServers": {
+    "substack-api": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--name",
+        "substack-mcp",
+        "-e",
+        "SESSION_ID",
+        "substack-mcp",
+        "start"
+      ],
+      "env": {
+        "SESSION_ID": "999"
+      }
+    }
+  }
+}]

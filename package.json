@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
   "keywords": [
     "mcp",
@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",
+    "axios": "^1.9.0",
     "zod": "^3.24.4",
     "zod-to-json-schema": "^3.24.5"
   }
