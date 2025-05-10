@@ -42,14 +42,19 @@ fi
 # Always add latest tag
 TAGS+=("$REPO:latest")
 
-echo "Building Docker image..."
-docker build -t temp-image .
+# Ensure buildx builder exists
+if ! docker buildx inspect multiarch-builder >/dev/null 2>&1; then
+  docker buildx create --name multiarch-builder --use
+else
+  docker buildx use multiarch-builder
+fi
 
-# Tag and push the image with all our tags
-for TAG in "${TAGS[@]}"; do
-  echo "Tagging and pushing: $TAG"
-  docker tag temp-image "$TAG"
-  docker push "$TAG"
-done
+echo "Building and pushing multi-arch image..."
 
-echo "Docker build and push completed successfully!" 
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  $(for TAG in "${TAGS[@]}"; do echo --tag "$TAG"; done) \
+  --push \
+  .
+
+echo "✅ Multi-arch Docker build and push completed successfully!"
