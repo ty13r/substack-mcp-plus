@@ -10,6 +10,13 @@
   "scripts": {
     "start": "node src/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcomoauro/substack-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcomoauro/substack-mcp/issues"
+  },
   "keywords": [
     "mcp",
     "mcpserver",
