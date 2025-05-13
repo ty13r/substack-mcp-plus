@@ -33,7 +33,32 @@ A Model Context Protocol (MCP) Server for [Substack](https://substack.com) enabl
 The installation process is standardized across all MCP clients. It involves manually adding a configuration object to your client's MCP configuration JSON file.
 > If you're unsure how to configure an MCP with your client, please refer to your MCP client's official documentation.
 
-<summary><strong>Using Docker</strong></summary>
+#### 🧩 Engines
+
+<summary><strong>Option 1: Using NPX</strong></summary>
+
+This option requires Node.js to be installed on your system.
+
+1. Add the following to your MCP configuration file:
+```json
+{
+  "mcpServers": {
+    "substack-api": {
+      "command": "npx",
+      "args": ["-y", "substack-mcp@latest"],
+      "env": {
+        "SUBSTACK_PUBLICATION_URL": "<YOUR_PUBLICATION_URL>",
+        "SUBSTACK_SESSION_TOKEN": "<YOUR_SESSION_TOKEN>",
+        "SUBSTACK_USER_ID": "<YOUR_USER_ID>"
+      }
+    }
+  }
+}
+```
+
+2. Replace `<SUBSTACK_PUBLICATION_URL>`, `<YOUR_SESSION_TOKEN>` and `<YOUR_USER_ID>` with your credentials.
+
+<summary><strong>Option 2: Using Docker</strong></summary>
 
 This option requires Docker to be installed on your system.
 
