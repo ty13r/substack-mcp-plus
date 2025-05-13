@@ -1,8 +1,12 @@
 {
   "name": "substack-mcp",
   "version": "1.0.3",
-  "description": "",
-  "main": "index.js",
+  "description": "A Model Context Protocol (MCP) Server for Substack enabling LLM clients to interact with Substack's API for automations like creating posts, managing drafts, and more.",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "substack-mcp": "src/index.js"
+  },
   "scripts": {
     "start": "node src/index.js"
   },
@@ -10,18 +14,19 @@
     "mcp",
     "mcpserver",
     "substack",
-    "ai"
+    "ai",
+    "post",
+    "draft"
   ],
   "author": {
     "name": "Marco Moauro",
     "email": "marcomoauro@hotmail.it"
   },
-  "type": "module",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.0",
-    "axios": "^1.9.0",
-    "zod": "^3.24.4",
-    "zod-to-json-schema": "^3.24.5"
+    "@modelcontextprotocol/sdk": "1.11.2",
+    "axios": "1.9.0",
+    "zod": "3.24.4",
+    "zod-to-json-schema": "3.24.5"
   }
 }
