@@ -20,7 +20,7 @@ A Model Context Protocol (MCP) Server for [Substack](https://substack.com) enabl
 
 ### 📋 Requirements
 
-- Substack tokens:
+- Substack tokens, follow my [guide](https://implementing.substack.com/p/mcp-server-for-substack) to obtain them:
     - Session token
     - Publication URL
     - User ID
