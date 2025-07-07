@@ -1,0 +1,74 @@
+# Development and test files
+tests/
+test_*.py
+*_test.py
+*.test.js
+coverage/
+htmlcov/
+.coverage
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Version control
+.git/
+.github/
+.gitignore
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Documentation source files (keep compiled docs)
+docs/*.md
+!docs/README.md
+
+# Python virtual environments
+venv/
+env/
+.venv/
+
+# CI/CD and operations
+ops/
+.github/
+.travis.yml
+.gitlab-ci.yml
+
+# Development config
+.env
+.env.*
+!.env.example
+pyproject.toml
+setup.cfg
+requirements-dev.txt
+Makefile
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+*~
+
+# Test data
+test-data/
+fixtures/
+
+# Keep only essential files
+# The package needs:
+# - package.json
+# - src/ (all source code)
+# - scripts/ (postinstall)
+# - README.md
+# - LICENSE
+# - CHANGELOG.md
+# - docs/README.md

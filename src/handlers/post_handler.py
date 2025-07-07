@@ -1,0 +1,1019 @@
+# ABOUTME: PostHandler class for managing Substack post operations
+# ABOUTME: Handles creating, updating, publishing, and listing posts with formatting
+
+from typing import Dict, Any, List, Optional, Union
+from datetime import datetime
+import logging
+from src.converters.markdown_converter import MarkdownConverter
+from src.converters.html_converter import HTMLConverter
+from src.converters.block_builder import BlockBuilder
+from src.utils.api_wrapper import SubstackAPIError
+from substack.post import Post
+
+logger = logging.getLogger(__name__)
+
+
+class PostHandler:
+    """Handles post operations for Substack"""
+    
+    def __init__(self, client):
+        """Initialize the post handler with an authenticated client
+        
+        Args:
+            client: An authenticated Substack API client
+        """
+        self.client = client
+        self.markdown_converter = MarkdownConverter()
+        self.html_converter = HTMLConverter()
+        self.block_builder = BlockBuilder()
+        
+        # Debug: Log client type and attributes
+        logger.debug(f"PostHandler initialized with client type: {type(client)}")
+        logger.debug(f"Client class name: {client.__class__.__name__}")
+        logger.debug(f"Client has _handle_response: {hasattr(client, '_handle_response')}")
+        logger.debug(f"Client attributes: {[attr for attr in dir(client) if not attr.startswith('_')]}[:10]")
+    
+    async def create_draft(
+        self,
+        title: str,
+        content: str,
+        subtitle: Optional[str] = None,
+        content_type: str = "markdown"
+    ) -> Dict[str, Any]:
+        """Create a draft post with formatted content
+        
+        Args:
+            title: The post title
+            content: The post content (markdown, HTML, or plain text)
+            subtitle: Optional subtitle for the post
+            content_type: Type of content ("markdown", "html", or "plain")
+            
+        Returns:
+            The created post data from Substack
+            
+        Raises:
+            ValueError: If content_type is not supported or invalid input
+        """
+        # Input validation
+        if not title or not isinstance(title, str):
+            raise ValueError("Title must be a non-empty string")
+        
+        if len(title) > 280:  # Substack title limit
+            raise ValueError("Title must be 280 characters or less")
+        
+        if not content or not isinstance(content, str):
+            raise ValueError("Content must be a non-empty string")
+        
+        if subtitle is not None and not isinstance(subtitle, str):
+            raise ValueError("Subtitle must be a string if provided")
+        
+        if subtitle and len(subtitle) > 280:  # Substack subtitle limit
+            raise ValueError("Subtitle must be 280 characters or less")
+        
+        valid_content_types = ["markdown", "html", "plain"]
+        if content_type not in valid_content_types:
+            raise ValueError(f"content_type must be one of: {', '.join(valid_content_types)}")
+        # Convert content to blocks based on type
+        blocks = self._convert_content_to_blocks(content, content_type)
+        
+        # Handle paywall markers in content
+        blocks = self._process_paywall_markers(content, blocks, content_type)
+        
+        # Format blocks for API
+        body = self._format_blocks_for_api(blocks)
+        
+        # Create a Post object as required by python-substack
+        # Get user_id from the client
+        user_id = self.client.get_user_id()
+        
+        # Check if content has paywall markers - if so, set audience to paid subscribers
+        audience = "everyone"  # default
+        paywall_markers = ["<!-- PAYWALL -->", "<!--PAYWALL-->", "<!--paywall-->", "<!-- paywall -->"]
+        if content_type == "markdown":
+            for marker in paywall_markers:
+                if marker in content:
+                    audience = "only_paid"
+                    break
+        
+        # Create Post object
+        post = Post(
+            title=title,
+            subtitle=subtitle or "",
+            user_id=user_id,
+            audience=audience
+        )
+        
+        # Add content blocks using the Post object's methods
+        self._add_blocks_to_post(post, blocks)
+            
+        # Create the draft
+        return self.client.post_draft(post.get_draft())
+    
+    async def update_draft(
+        self,
+        post_id: str,
+        title: Optional[str] = None,
+        content: Optional[str] = None,
+        subtitle: Optional[str] = None,
+        content_type: str = "markdown"
+    ) -> Dict[str, Any]:
+        """Update an existing draft post
+        
+        Args:
+            post_id: The ID of the post to update
+            title: New title (optional)
+            content: New content (optional)
+            subtitle: New subtitle (optional)
+            content_type: Type of content if content is provided
+            
+        Returns:
+            The updated post data from Substack
+            
+        Raises:
+            ValueError: If invalid input provided
+        """
+        # Input validation
+        if not post_id or not isinstance(post_id, str):
+            raise ValueError("post_id must be a non-empty string")
+        
+        if title is not None:
+            if not isinstance(title, str) or not title:
+                raise ValueError("Title must be a non-empty string if provided")
+            if len(title) > 280:
+                raise ValueError("Title must be 280 characters or less")
+        
+        if subtitle is not None:
+            if not isinstance(subtitle, str):
+                raise ValueError("Subtitle must be a string if provided")
+            if len(subtitle) > 280:
+                raise ValueError("Subtitle must be 280 characters or less")
+        
+        if content is not None:
+            if not isinstance(content, str) or not content:
+                raise ValueError("Content must be a non-empty string if provided")
+            
+            valid_content_types = ["markdown", "html", "plain"]
+            if content_type not in valid_content_types:
+                raise ValueError(f"content_type must be one of: {', '.join(valid_content_types)}")
+        # Get the current draft to check if it's published
+        current_draft = self.client.get_draft(post_id)
+        is_draft = not current_draft.get("post_date")
+        
+        update_data = {}
+        
+        if title is not None:
+            # Use draft_title for drafts, title for published
+            if is_draft:
+                update_data["draft_title"] = title
+            else:
+                update_data["title"] = title
+        
+        if subtitle is not None:
+            # Use draft_subtitle for drafts, subtitle for published
+            if is_draft:
+                update_data["draft_subtitle"] = subtitle
+            else:
+                update_data["subtitle"] = subtitle
+        
+        if content is not None:
+            blocks = self._convert_content_to_blocks(content, content_type)
+            blocks = self._process_paywall_markers(content, blocks, content_type)
+            # Use draft_body for drafts, body for published
+            if is_draft:
+                update_data["draft_body"] = self._format_blocks_for_api(blocks)
+            else:
+                update_data["body"] = self._format_blocks_for_api(blocks)
+        
+        return self.client.put_draft(post_id, **update_data)
+    
+    async def publish_draft(
+        self,
+        post_id: str,
+        scheduled_at: Optional[datetime] = None
+    ) -> Dict[str, Any]:
+        """Publish a draft post immediately or schedule it
+        
+        Args:
+            post_id: The ID of the draft to publish
+            scheduled_at: Optional datetime to schedule the post
+            
+        Returns:
+            The published/scheduled post data
+            
+        Raises:
+            ValueError: If invalid input provided
+        """
+        # Input validation
+        if not post_id or not isinstance(post_id, str):
+            raise ValueError("post_id must be a non-empty string")
+        
+        if scheduled_at is not None:
+            if not isinstance(scheduled_at, datetime):
+                raise ValueError("scheduled_at must be a datetime object if provided")
+            
+            # Ensure scheduled time is in the future
+            if scheduled_at <= datetime.now(scheduled_at.tzinfo):
+                raise ValueError("scheduled_at must be in the future")
+        if scheduled_at:
+            return self.client.schedule_draft(post_id, scheduled_at)
+        else:
+            return self.client.publish_draft(post_id)
+    
+    async def list_drafts(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """List recent draft posts
+        
+        Args:
+            limit: Maximum number of drafts to return (1-50)
+            
+        Returns:
+            List of draft posts
+            
+        Raises:
+            ValueError: If limit is invalid
+        """
+        # Input validation
+        if not isinstance(limit, int):
+            raise ValueError("limit must be an integer")
+        
+        if limit < 1 or limit > 25:
+            raise ValueError("limit must be between 1 and 25")
+        # python-substack returns a generator, convert to list
+        # The API returns all posts, so we need to filter for drafts only
+        all_posts = self.client.get_drafts(limit=min(limit * 3, 50))  # Get more to ensure we have enough drafts, but cap at 50
+        drafts = []
+        
+        for post in all_posts:
+            # Check if it's actually a draft (not published)
+            if post.get('draft_title') and not post.get('post_date'):
+                drafts.append(post)
+                if len(drafts) >= limit:
+                    break
+        
+        return drafts
+    
+    async def list_published(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """List recent published posts
+        
+        Args:
+            limit: Maximum number of published posts to return (1-50)
+            
+        Returns:
+            List of published posts
+            
+        Raises:
+            ValueError: If limit is invalid
+        """
+        # Input validation
+        if not isinstance(limit, int):
+            raise ValueError("limit must be an integer")
+        
+        if limit < 1 or limit > 25:
+            raise ValueError("limit must be between 1 and 25")
+        
+        # Get all posts and filter for published only
+        all_posts = self.client.get_drafts(limit=min(limit * 2, 50))  # Get more to ensure we have enough, but cap at 50
+        published = []
+        
+        for post in all_posts:
+            # Check if it's published (has a post_date)
+            if post.get('post_date'):
+                published.append(post)
+                if len(published) >= limit:
+                    break
+        
+        return published
+    
+    async def get_post(self, post_id: str) -> Dict[str, Any]:
+        """Get a specific post by ID
+        
+        Args:
+            post_id: The ID of the post to retrieve
+            
+        Returns:
+            The post data
+        """
+        # python-substack uses get_draft for both drafts and published posts
+        return self.client.get_draft(post_id)
+    
+    async def get_post_content(self, post_id: str) -> Dict[str, Any]:
+        """Get the full content of a post with formatting details
+        
+        Args:
+            post_id: The ID of the post to read
+            
+        Returns:
+            Post data with title, subtitle, and formatted content
+        """
+        try:
+            # Debug logging
+            logger.debug(f"get_post_content called with post_id: {post_id}")
+            logger.debug(f"Client type: {type(self.client)}")
+            logger.debug(f"Client class: {self.client.__class__.__name__}")
+            logger.debug(f"Is APIWrapper: {self.client.__class__.__name__ == 'APIWrapper'}")
+            
+            # This should raise SubstackAPIError if response is a string
+            logger.debug(f"About to call client.get_draft({post_id})")
+            post = self.client.get_draft(post_id)
+            logger.debug(f"get_draft returned successfully, type: {type(post)}")
+            
+            # Extra safety check
+            if not isinstance(post, dict):
+                logger.error(f"Unexpected response type from Substack API: {type(post)}, value: {post}")
+                raise ValueError(f"Invalid response from Substack API - expected dict, got {type(post)}")
+                
+            # Extract the content in a readable format
+            result = {
+                "id": post.get("id"),
+                "title": post.get("title") or post.get("draft_title", "Untitled"),
+                "subtitle": post.get("subtitle") or post.get("draft_subtitle", ""),
+                "status": "published" if post.get("post_date") else "draft",
+                "content": self._extract_readable_content(post),
+                "publication_date": post.get("post_date"),
+                "audience": post.get("audience", "everyone")
+            }
+            
+            return result
+            
+        except SubstackAPIError as e:
+            # API errors should bubble up as-is
+            logger.error(f"SubstackAPIError in get_post_content for post_id {post_id}: {str(e)}")
+            raise
+        except AttributeError as e:
+            # This is likely the 'str' object has no attribute 'get' error
+            logger.error(f"AttributeError in get_post_content - API likely returned a string: {str(e)}")
+            logger.error(f"Exception type: {type(e)}, Full details: {repr(e)}")
+            logger.error(f"Post variable type: {type(post) if 'post' in locals() else 'Not defined'}")
+            if 'post' in locals() and isinstance(post, str):
+                logger.error(f"Post is a string: {post}")
+            raise ValueError(f"API returned invalid data format for post {post_id}")
+        except Exception as e:
+            logger.error(f"Unexpected error in get_post_content for post_id {post_id}: {str(e)}, type: {type(e)}")
+            raise ValueError(f"Failed to get content for post {post_id}: {str(e)}")
+    
+    async def duplicate_post(self, post_id: str, new_title: Optional[str] = None) -> Dict[str, Any]:
+        """Create a copy of an existing post as a new draft
+        
+        Args:
+            post_id: The ID of the post to duplicate
+            new_title: Optional title for the new draft (defaults to "Copy of [original]")
+            
+        Returns:
+            The new draft post data
+        """
+        try:
+            # Debug logging
+            logger.debug(f"duplicate_post called with post_id: {post_id}")
+            logger.debug(f"Client type: {type(self.client)}")
+            logger.debug(f"Client class: {self.client.__class__.__name__}")
+            logger.debug(f"Is APIWrapper: {self.client.__class__.__name__ == 'APIWrapper'}")
+            
+            # Get the original post - wrapper should raise if string
+            logger.debug(f"About to call client.get_draft({post_id})")
+            original = self.client.get_draft(post_id)
+            
+            # Extra safety check
+            if not isinstance(original, dict):
+                logger.error(f"Unexpected response type from Substack API: {type(original)}, value: {original}")
+                raise ValueError(f"Invalid response from Substack API - expected dict, got {type(original)}")
+                
+            # Extract title and content
+            original_title = original.get("title") or original.get("draft_title", "Untitled")
+            title = new_title or f"Copy of {original_title}"
+            subtitle = original.get("subtitle") or original.get("draft_subtitle", "")
+            
+            # Extract content blocks
+            # Safely get body, ensuring it's a dict
+            body = original.get("body") or original.get("draft_body")
+            if not isinstance(body, dict):
+                logger.warning(f"Original post body is not a dict: {type(body)}")
+                body = {}
+            
+            blocks = body.get("blocks", [])
+            
+            # Create new post with same content
+            user_id = self.client.get_user_id()
+            post = Post(
+                title=title,
+                subtitle=subtitle,
+                user_id=user_id,
+                audience=original.get("audience", "everyone")
+            )
+            
+            # Add all blocks to the new post
+            self._add_blocks_to_post(post, blocks)
+            
+            # Create the draft
+            result = self.client.post_draft(post.get_draft())
+            return result
+            
+        except SubstackAPIError as e:
+            # API errors should bubble up as-is
+            logger.error(f"SubstackAPIError in duplicate_post for post_id {post_id}: {str(e)}")
+            raise
+        except AttributeError as e:
+            # This is likely the 'str' object has no attribute 'get' error  
+            logger.error(f"AttributeError in duplicate_post - API likely returned a string: {str(e)}")
+            logger.error(f"Exception type: {type(e)}, Full details: {repr(e)}")
+            logger.error(f"Original variable type: {type(original) if 'original' in locals() else 'Not defined'}")
+            if 'original' in locals() and isinstance(original, str):
+                logger.error(f"Original is a string: {original}")
+            raise ValueError(f"API returned invalid data format for post {post_id}")
+        except Exception as e:
+            logger.error(f"Unexpected error in duplicate_post for post_id {post_id}: {str(e)}, type: {type(e)}")
+            raise ValueError(f"Failed to duplicate post {post_id}: {str(e)}")
+    
+    async def schedule_post(self, post_id: str, scheduled_at: datetime) -> Dict[str, Any]:
+        """Schedule a draft to be published at a specific time
+        
+        Args:
+            post_id: The ID of the draft to schedule
+            scheduled_at: The datetime to publish the post
+            
+        Returns:
+            The scheduled post data
+        """
+        # Input validation
+        if not isinstance(scheduled_at, datetime):
+            raise ValueError("scheduled_at must be a datetime object")
+        
+        # Ensure scheduled time is in the future
+        if scheduled_at <= datetime.now(scheduled_at.tzinfo):
+            raise ValueError("scheduled_at must be in the future")
+        
+        return self.client.schedule_draft(post_id, scheduled_at)
+    
+    async def unschedule_post(self, post_id: str) -> Dict[str, Any]:
+        """Unschedule a scheduled post (convert back to draft)
+        
+        Args:
+            post_id: The ID of the scheduled post
+            
+        Returns:
+            The unscheduled post data
+        """
+        return self.client.unschedule_draft(post_id)
+    
+    async def get_sections(self) -> List[Dict[str, Any]]:
+        """Get available sections/categories for organizing posts
+        
+        Returns:
+            List of sections with their IDs and names
+        """
+        sections = self.client.get_sections()
+        return list(sections) if sections else []
+    
+    async def get_subscriber_count(self) -> Dict[str, Any]:
+        """Get the total subscriber count for the publication
+        
+        Returns:
+            Dictionary with subscriber count and other stats
+        """
+        try:
+            # The API wrapper handles conversion and errors
+            count = self.client.get_publication_subscriber_count()
+            
+            return {
+                "total_subscribers": count,
+                "publication_url": self.client.publication_url
+            }
+        except Exception as e:
+            logger.warning(f"Primary method failed: {str(e)}, trying alternative via sections")
+            
+            # Try alternative method via sections
+            try:
+                # The API wrapper handles sections retrieval
+                sections = self.client.get_sections()
+                    
+                if sections and len(sections) > 0:
+                    # Get subscriber count from first section
+                    first_section = sections[0]
+                    if isinstance(first_section, dict):
+                        count = first_section.get('subscriber_count', 0)
+                        return {
+                            "total_subscribers": int(count),
+                            "publication_url": self.client.publication_url
+                        }
+                        
+                # If we get here, neither method worked
+                raise ValueError(f"Unable to get subscriber count: {str(e)}")
+                
+            except Exception as e2:
+                logger.error(f"Both methods failed to get subscriber count: primary={str(e)}, sections={str(e2)}")
+                if isinstance(e, SubstackAPIError):
+                    raise e
+                raise SubstackAPIError(f"Unable to get subscriber count (both methods failed)")
+    
+    async def preview_draft(self, post_id: str) -> Dict[str, Any]:
+        """Get a preview link for a draft post
+        
+        Args:
+            post_id: The ID of the draft to preview
+            
+        Returns:
+            Preview information including shareable link
+        """
+        try:
+            # First get the draft to extract its slug
+            draft = self.client.get_draft(post_id)
+                
+            if not isinstance(draft, dict):
+                logger.error(f"Unexpected draft response type: {type(draft)}")
+                raise ValueError(f"Invalid draft response")
+                
+            # Extract slug from draft
+            slug = draft.get('slug') or draft.get('draft_slug', '')
+            
+            if not slug:
+                logger.warning(f"No slug found in draft {post_id}")
+                # Try prepublish_draft to generate slug
+                try:
+                    preview_data = self.client.prepublish_draft(post_id)
+                    logger.debug(f"prepublish_draft response type: {type(preview_data)}")
+                    
+                    if isinstance(preview_data, str):
+                        logger.error(f"prepublish_draft returned string error: {preview_data}")
+                    elif isinstance(preview_data, dict):
+                        slug = preview_data.get('slug') or preview_data.get('draft_slug', '')
+                except Exception as e:
+                    logger.error(f"prepublish_draft failed: {str(e)}")
+            
+            # Construct preview URL
+            preview_url = None
+            if slug and self.client.publication_url:
+                # Standard preview URL format
+                preview_url = f"{self.client.publication_url}/p/{slug}"
+                
+                # Add draft_id parameter if it's actually a draft
+                if not draft.get('post_date'):  # It's a draft
+                    preview_url += f"?draft_id={post_id}"
+            
+            # If we still don't have a URL, try one more format
+            if not preview_url and self.client.publication_url:
+                # Fallback: use the edit URL format
+                preview_url = f"{self.client.publication_url}/publish/post/{post_id}"
+            
+            return {
+                "post_id": post_id,
+                "preview_url": preview_url,
+                "title": draft.get('draft_title') or draft.get('title', 'Untitled'),
+                "message": f"Preview link: {preview_url}" if preview_url else "Unable to generate preview URL"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in preview_draft for post_id {post_id}: {str(e)}, type: {type(e)}")
+            # Re-raise with more context
+            if isinstance(e, SubstackAPIError):
+                raise
+            raise ValueError(f"Failed to generate preview for post {post_id}: {str(e)}")
+    
+    def _extract_readable_content(self, post: Dict[str, Any]) -> str:
+        """Extract content from a post in a readable text format
+        
+        Args:
+            post: The post data
+            
+        Returns:
+            Readable text content
+        """
+        # Safely get body, ensuring it's a dict
+        body = post.get("body") or post.get("draft_body")
+        if not isinstance(body, dict):
+            logger.warning(f"Post body is not a dict: {type(body)}")
+            body = {}
+        
+        blocks = body.get("blocks", [])
+        
+        content_parts = []
+        for block in blocks:
+            block_type = block.get("type")
+            
+            if block_type == "paragraph":
+                text = self._extract_text_from_content(block.get("content", []))
+                if text:
+                    content_parts.append(text)
+                    
+            elif block_type in ["heading-one", "heading-two", "heading-three"]:
+                text = self._extract_text_from_content(block.get("content", []))
+                if text:
+                    level = {"heading-one": "#", "heading-two": "##", "heading-three": "###"}.get(block_type, "#")
+                    content_parts.append(f"{level} {text}")
+                    
+            elif block_type == "bulleted-list":
+                items = block.get("content", [])
+                for item in items:
+                    if isinstance(item, dict) and "content" in item:
+                        item_text = self._extract_text_from_content(item["content"][0].get("content", []))
+                        content_parts.append(f"• {item_text}")
+                        
+            elif block_type == "ordered-list":
+                items = block.get("content", [])
+                for i, item in enumerate(items, 1):
+                    if isinstance(item, dict) and "content" in item:
+                        item_text = self._extract_text_from_content(item["content"][0].get("content", []))
+                        content_parts.append(f"{i}. {item_text}")
+                        
+            elif block_type == "blockquote":
+                text = self._extract_text_from_content(block.get("content", []))
+                if text:
+                    content_parts.append(f"> {text}")
+                    
+            elif block_type == "code":
+                code = block.get("content", "")
+                if code:
+                    content_parts.append(f"```\n{code}\n```")
+                    
+            elif block_type == "hr":
+                content_parts.append("---")
+                
+            elif block_type == "paywall":
+                content_parts.append("<!-- PAYWALL -->")
+                
+            elif block_type == "captioned-image":
+                alt = block.get("alt", "Image")
+                caption = block.get("caption", "")
+                content_parts.append(f"![{alt}]({block.get('src', '')})")
+                if caption:
+                    content_parts.append(f"*{caption}*")
+            
+            # Add spacing between blocks
+            if content_parts and block_type != "paywall":
+                content_parts.append("")
+        
+        return "\n".join(content_parts).strip()
+    
+    def _convert_content_to_blocks(self, content: str, content_type: str) -> List[Dict[str, Any]]:
+        """Convert content to Substack blocks based on content type
+        
+        Args:
+            content: The content to convert
+            content_type: Type of content ("markdown", "html", or "plain")
+            
+        Returns:
+            List of Substack blocks
+            
+        Raises:
+            ValueError: If content_type is not supported
+        """
+        if content_type == "markdown":
+            return self.markdown_converter.convert(content)
+        elif content_type == "html":
+            return self.html_converter.convert(content)
+        elif content_type == "plain":
+            return self._plain_text_to_blocks(content)
+        else:
+            raise ValueError(f"Unsupported content type: {content_type}")
+    
+    def _plain_text_to_blocks(self, content: str) -> List[Dict[str, Any]]:
+        """Convert plain text to paragraph blocks
+        
+        Args:
+            content: Plain text content
+            
+        Returns:
+            List of paragraph blocks
+        """
+        blocks = []
+        paragraphs = content.split('\n\n')
+        
+        for paragraph in paragraphs:
+            if paragraph.strip():
+                blocks.append(self.block_builder.paragraph(paragraph.strip()))
+        
+        return blocks
+    
+    
+    def _process_paywall_markers(
+        self, 
+        content: str, 
+        blocks: List[Dict[str, Any]], 
+        content_type: str
+    ) -> List[Dict[str, Any]]:
+        """Process paywall markers in content
+        
+        Args:
+            content: Original content string
+            blocks: Converted blocks
+            content_type: Type of content
+            
+        Returns:
+            Blocks with paywall markers inserted
+        """
+        # Check for paywall markers (support multiple formats)
+        paywall_markers = ["<!-- PAYWALL -->", "<!--PAYWALL-->", "<!--paywall-->", "<!-- paywall -->"]
+        paywall_marker = None
+        
+        for marker in paywall_markers:
+            if content_type == "markdown" and marker in content:
+                paywall_marker = marker
+                break
+        
+        if paywall_marker:
+            # Find where to insert paywall block
+            new_blocks = []
+            
+            # Split content by paywall marker to determine position
+            parts = content.split(paywall_marker)
+            if len(parts) > 1:
+                # Convert first part to blocks
+                first_part_blocks = self.markdown_converter.convert(parts[0])
+                new_blocks.extend(first_part_blocks)
+                
+                # Add paywall block
+                new_blocks.append(self.block_builder.paywall())
+                
+                # Convert remaining parts
+                for part in parts[1:]:
+                    if part.strip():
+                        part_blocks = self.markdown_converter.convert(part)
+                        new_blocks.extend(part_blocks)
+                
+                return new_blocks
+        
+        return blocks
+    
+    def _format_blocks_for_api(self, blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Format blocks for Substack API
+        
+        Args:
+            blocks: List of block dictionaries
+            
+        Returns:
+            Formatted body object for API
+        """
+        return {"blocks": blocks}
+    
+    def _add_blocks_to_post(self, post: Post, blocks: List[Dict[str, Any]]):
+        """Add blocks to a Post object using the correct python-substack methods
+        
+        Args:
+            post: The Post object to add content to
+            blocks: List of block dictionaries to add
+        """
+        for block in blocks:
+            block_type = block.get('type')
+            content = block.get('content')
+            
+            if block_type == 'paragraph':
+                # Extract text and add as single paragraph
+                text_content = self._extract_text_from_content(content)
+                post.paragraph(text_content)
+                
+            elif block_type in ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six']:
+                level_map = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}
+                level_text = block_type.split('-')[1]
+                actual_level = level_map.get(level_text, 1)
+                # Extract text from AST structure
+                text_content = self._extract_text_from_content(content)
+                post.heading(text_content, actual_level)
+                
+            elif block_type == 'hr':
+                post.horizontal_rule()
+                
+            elif block_type == 'paywall':
+                # Add paywall block - the library doesn't have a direct method, so use add()
+                post.add({'type': 'paywall'})
+                
+            elif block_type == 'captioned-image':
+                # Use the captioned_image method
+                post.captioned_image(
+                    src=block.get('src', ''),
+                    alt=block.get('alt', ''),
+                    title=block.get('caption', '')
+                )
+                
+            elif block_type == 'code':
+                # Code blocks - add as proper code_block type
+                code_content = block.get('content', '')
+                language = block.get('language', '')
+                
+                # Enhance readability by adding language comment at the top
+                enhanced_content = code_content
+                if language:
+                    # Add language identifier as a comment for clarity
+                    language_upper = language.upper()
+                    comment_char = self._get_comment_char(language)
+                    if comment_char:
+                        separator = "=" * 20
+                        header = f"{comment_char} {separator} {language_upper} CODE {separator}"
+                        # Only add header if it's not already present
+                        if not code_content.startswith(header):
+                            enhanced_content = f"{header}\n{code_content}"
+                
+                # The python-substack library expects the content as a raw string
+                code_block = {
+                    'type': 'code_block',
+                    'content': enhanced_content
+                }
+                
+                # Include language attrs for future compatibility
+                if language:
+                    code_block['attrs'] = {'language': language}
+                
+                post.add(code_block)
+                
+            elif block_type in ['bulleted-list', 'ordered-list']:
+                # Lists - convert to formatted paragraphs
+                list_items = block.get('content', [])
+                for i, item in enumerate(list_items, 1):
+                    if isinstance(item, dict) and 'content' in item:
+                        item_content = item['content']
+                        if isinstance(item_content, list) and len(item_content) > 0:
+                            # Extract text from the paragraph content
+                            para_content = self._extract_text_from_content(item_content[0].get('content', []))
+                            prefix = "• " if block_type == 'bulleted-list' else f"{i}. "
+                            post.paragraph(f"{prefix}{para_content}")
+                            
+            elif block_type == 'blockquote':
+                # Extract text from blockquote content
+                quote_text = self._extract_text_from_content(content)
+                post.paragraph(f"> {quote_text}")
+                
+            else:
+                # Fallback: extract text and add as paragraph
+                if content:
+                    text_content = self._extract_text_from_content(content)
+                    if text_content:
+                        post.paragraph(text_content)
+    
+    def _extract_text_from_content(self, content) -> str:
+        """Extract plain text from AST content structure
+        
+        Args:
+            content: Content from block (can be string, list, or dict)
+            
+        Returns:
+            Plain text string with formatting applied
+        """
+        if isinstance(content, str):
+            return content
+            
+        elif isinstance(content, list):
+            text_parts = []
+            for item in content:
+                if isinstance(item, dict):
+                    item_type = item.get('type')
+                    item_content = item.get('content', '')
+                    
+                    # Handle nested structures recursively
+                    if item_type in ['paragraph', 'text']:
+                        if item_type == 'text':
+                            # This is a text node with possible formatting
+                            text = str(item_content)
+                            marks = item.get('marks', [])
+                            
+                            # Apply formatting based on marks
+                            for mark in marks:
+                                mark_type = mark.get('type')
+                                if mark_type == 'strong':
+                                    text = f"**{text}**"
+                                elif mark_type == 'em':
+                                    text = f"*{text}*"
+                                elif mark_type == 'code':
+                                    text = f"`{text}`"
+                                elif mark_type == 'link':
+                                    href = mark.get('href', '#')
+                                    text = f"[{text}]({href})"
+                            
+                            text_parts.append(text)
+                        else:
+                            # This is a paragraph, recursively extract its content
+                            text_parts.append(self._extract_text_from_content(item_content))
+                    else:
+                        # For other types, try to extract content recursively
+                        text_parts.append(self._extract_text_from_content(item_content))
+                        
+                elif isinstance(item, str):
+                    text_parts.append(item)
+                    
+            return ''.join(text_parts)
+            
+        elif isinstance(content, dict):
+            # Handle dict content recursively
+            return self._extract_text_from_content(content.get('content', ''))
+            
+        return str(content)
+    
+    def _add_formatted_content_to_paragraph(self, para, content):
+        """Add formatted content to a paragraph object
+        
+        Args:
+            para: The paragraph object from Post
+            content: The content list from the AST
+        """
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'text':
+                    text = item.get('content', item.get('text', ''))  # Check both 'content' and 'text'
+                    marks = item.get('marks', [])
+                    
+                    # Add text first
+                    para.text(text)
+                    
+                    # Then apply marks if any
+                    if marks and len(marks) > 0:  # Only call marks() if we have actual marks
+                        para.marks(marks)
+                        
+        elif isinstance(content, str):
+            para.text(content)
+    
+    def _convert_content_to_text_nodes(self, content):
+        """Convert AST content to proper text nodes with marks
+        
+        Args:
+            content: Content from AST
+            
+        Returns:
+            List of text nodes with proper marks
+        """
+        if isinstance(content, list):
+            nodes = []
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'text':
+                    node = {
+                        'type': 'text',
+                        'text': item.get('content', '')
+                    }
+                    if 'marks' in item and item['marks']:
+                        node['marks'] = item['marks']
+                    nodes.append(node)
+            return nodes
+        return []
+    
+    def _get_comment_char(self, language: str) -> str:
+        """Get the appropriate comment character for a language
+        
+        Args:
+            language: Programming language name
+            
+        Returns:
+            Comment character(s) for that language
+        """
+        comment_chars = {
+            'python': '#',
+            'python3': '#',
+            'py': '#',
+            'ruby': '#',
+            'rb': '#',
+            'perl': '#',
+            'bash': '#',
+            'sh': '#',
+            'shell': '#',
+            'yaml': '#',
+            'yml': '#',
+            'makefile': '#',
+            'r': '#',
+            'julia': '#',
+            'elixir': '#',
+            'javascript': '//',
+            'js': '//',
+            'typescript': '//',
+            'ts': '//',
+            'java': '//',
+            'c': '//',
+            'cpp': '//',
+            'c++': '//',
+            'csharp': '//',
+            'cs': '//',
+            'go': '//',
+            'golang': '//',
+            'rust': '//',
+            'rs': '//',
+            'swift': '//',
+            'kotlin': '//',
+            'php': '//',
+            'dart': '//',
+            'scala': '//',
+            'groovy': '//',
+            'sql': '--',
+            'postgresql': '--',
+            'mysql': '--',
+            'lua': '--',
+            'haskell': '--',
+            'elm': '--',
+            'html': '<!--',
+            'xml': '<!--',
+            'css': '/*',
+            'scss': '/*',
+            'sass': '//',
+            'less': '//',
+            'lisp': ';',
+            'clojure': ';',
+            'scheme': ';',
+            'asm': ';',
+            'assembly': ';',
+            'vb': "'",
+            'vbnet': "'",
+            'basic': "'",
+            'matlab': '%',
+            'octave': '%',
+            'latex': '%',
+            'tex': '%',
+            'fortran': '!',
+            'f90': '!',
+            'ada': '--',
+            'pascal': '//',
+            'delphi': '//',
+        }
+        
+        # Return the comment character for the language, default to #
+        return comment_chars.get(language.lower(), '#')

@@ -1,39 +1,60 @@
 {
-  "name": "substack-mcp",
-  "version": "1.0.6",
-  "description": "A Model Context Protocol (MCP) Server for Substack enabling LLM clients to interact with Substack's API for automations like creating posts, managing drafts, and more.",
+  "name": "substack-mcp-plus",
+  "version": "2.0.0",
+  "description": "Born from frustration, built with AI, designed for creators who ship. The most advanced Substack MCP server - Browser auth, 14 tools, rich text. Zero-config setup!",
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "substack-mcp": "src/index.js"
+    "substack-mcp-plus": "src/index.js"
   },
+  "preferGlobal": true,
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "postinstall": "node scripts/postinstall.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcomoauro/substack-mcp.git"
+    "url": "https://github.com/thunder-chief-labs/substack-mcp-plus.git"
   },
   "bugs": {
-    "url": "https://github.com/marcomoauro/substack-mcp/issues"
+    "url": "https://github.com/thunder-chief-labs/substack-mcp-plus/issues"
   },
+  "homepage": "https://github.com/thunder-chief-labs/substack-mcp-plus#readme",
   "keywords": [
     "mcp",
+    "mcp-server",
     "mcpserver",
+    "claude",
+    "claude-desktop",
+    "anthropic",
     "substack",
+    "newsletter",
+    "email-marketing",
+    "content-creation",
     "ai",
+    "llm",
+    "automation",
+    "publishing",
+    "rich-text",
+    "wysiwyg",
+    "markdown",
     "post",
-    "draft"
+    "draft",
+    "schedule-posts",
+    "browser-auth",
+    "captcha",
+    "formatting"
   ],
   "author": {
-    "name": "Marco Moauro",
-    "email": "marcomoauro@hotmail.it"
+    "name": "Thunder Chief",
+    "email": "thunder.chief@thunderlabs.dev"
   },
   "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "python": ">=3.10"
+  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.11.2",
-    "axios": "1.9.0",
-    "zod": "3.24.4",
-    "zod-to-json-schema": "3.24.5"
+    "node-pty": "^1.0.0"
   }
 }

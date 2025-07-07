@@ -10,3 +10,79 @@ docs/openapi*.json
 /yarn-error.log
 /yarn*/
 .env*
+cookies.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+venv/
+ENV/
+env/
+.venv/
+
+# Test and debug files
+test_*.py
+debug_*.py
+*_test.py
+
+# Configuration files with potential sensitive data
+claude_desktop_config.json
+cursor_config.json
+
+# Utility scripts
+cleanup_test_posts.py
+create_cookies.py
+get_browser_cookies.py
+get_session_token.py
+generate_test_content.py
+health_check.py
+fix_install.sh
+
+# Internal documentation
+docs/internal/
+
+# Additional Python artifacts
+UNKNOWN.egg-info/
+
+# Pip installation artifacts
+=*
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Additional editor files
+*.swp
+*.swo
+*.sublime-*

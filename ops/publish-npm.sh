@@ -15,12 +15,16 @@ if ! npm whoami &> /dev/null; then
   echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
 fi
 
-# Install dependencies
-echo "Installing dependencies..."
-yarn install --frozen-lockfile
+# Run tests before publishing
+echo "Running tests..."
+cd "$(dirname "$0")/.."
+if [ -d "venv" ]; then
+  ./venv/bin/python -m pytest tests/test_new_tools.py tests/test_post_handler_validation.py tests/test_simple_auth_manager.py -q
+fi
 
 # Publish to npm
 echo "Publishing to npm..."
-yarn publish --non-interactive --access public
+npm publish --access public
 
-echo "Package published successfully!" 
+echo "✅ Package published successfully to npm!"
+echo "📦 View at: https://www.npmjs.com/package/substack-mcp-plus"
