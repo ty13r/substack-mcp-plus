@@ -26,10 +26,31 @@ After running setup, add this minimal config to Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "substack": {
+    "substack-mcp-plus": {
       "command": "substack-mcp-plus",
       "env": {
-        "SUBSTACK_PUBLICATION_URL": "https://yourpub.substack.com"
+        "SUBSTACK_PUBLICATION_URL": "https://YOUR-PUBLICATION.substack.com"
+      }
+    }
+  }
+}
+```
+
+**Important**: Replace `YOUR-PUBLICATION` with your actual Substack subdomain (e.g., if your Substack is at `https://johndoe.substack.com`, use `johndoe`).
+
+If you already have other MCP servers configured, add this alongside them:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/directory"]
+    },
+    "substack-mcp-plus": {
+      "command": "substack-mcp-plus",
+      "env": {
+        "SUBSTACK_PUBLICATION_URL": "https://YOUR-PUBLICATION.substack.com"
       }
     }
   }

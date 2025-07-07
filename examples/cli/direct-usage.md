@@ -28,8 +28,11 @@ Add to your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "substack": {
-      "command": "substack-mcp-plus"
+    "substack-mcp-plus": {
+      "command": "substack-mcp-plus",
+      "env": {
+        "SUBSTACK_PUBLICATION_URL": "https://YOUR-PUBLICATION.substack.com"
+      }
     }
   }
 }
