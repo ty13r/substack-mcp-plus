@@ -5,13 +5,21 @@ Welcome to the Substack MCP Plus documentation! This directory contains all the 
 ## 📚 User Documentation
 
 ### Getting Started
-- **[Quick Start Guide](../QUICKSTART.md)** - Get up and running in 5 minutes
+- **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
 - **[Authentication Guide](authentication.md)** - Set up your Substack credentials
-- **[Testing Guide](testing_guide.md)** - Comprehensive guide for testing the MCP server
+- **[Current TODOs](TODO.md)** - Active work items you can contribute to
 
 ### Usage Guides
 - **[Formatting Guide](formatting.md)** - Learn about all supported text formatting options
-- **[Testing Documentation](TESTING.md)** - Details about the test suite and coverage
+- **[Testing Documentation](TESTING.md)** - Comprehensive testing guide including Claude Desktop
+- **[Test Checklist](claude_desktop_test_checklist.md)** - Quick testing reference
+- **[Coverage Report](COVERAGE_REPORT.md)** - Detailed test coverage breakdown by module
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Known Issues](KNOWN_ISSUES.md)** - Current limitations and workarounds
+- **[Error Handling Fixes](ERROR_HANDLING_FIXES.md)** - Journey of fixing critical errors
+- **[Features Overview](FEATURES.md)** - Detailed feature comparison and capabilities
+- **[Vision & Roadmap](VISION.md)** - Future plans and project vision
+- **[Confirmation System](CONFIRMATION_SYSTEM.md)** - Understanding the safety confirmation system
 
 ## 🔧 Development Documentation
 
@@ -21,28 +29,49 @@ For contributors and developers working on the project:
 - **[Product Requirements](internal/substack-mcp-plus-prd.md)** - Original product requirements document
 - **[Development Retrospective](internal/retrospective.md)** - Journey from JavaScript to Python
 - **[MCP Semantic Completeness](internal/mcp_semantic_completeness.md)** - Technical implementation details
+- **[Claude Code's Perspective](internal/CLAUDE_CODE_PERSPECTIVE.md)** - The AI's view of development
+- **[Error Handling Journey](internal/ERROR_HANDLING_JOURNEY.md)** - Technical error fixing journey
 
 ## 🔗 Quick Links
 
 - [Main README](../README.md)
+- [Roadmap & Next Steps](ROADMAP.md)
+- [Contributing Guide](../CONTRIBUTING.md)
 - [Security Policy](../SECURITY.md)
 - [Claude Code Configuration](../CLAUDE.md)
 - [Changelog](../CHANGELOG.md)
+- [License](../LICENSE)
 
 ## 📖 Documentation Structure
 
 ```
 docs/
-├── README.md                    # This file
+├── README.md                    # Documentation index (this file)
+├── QUICKSTART.md               # Get started in 5 minutes
+├── TODO.md                     # Current work items with subtasks
+├── ROADMAP.md                  # Long-term vision and features
 ├── authentication.md            # Authentication setup guide
 ├── formatting.md                # Content formatting guide
-├── testing_guide.md             # Testing instructions
-├── TESTING.md                   # Test suite documentation
+├── TESTING.md                   # Comprehensive testing documentation
+├── claude_desktop_test_checklist.md # Quick testing reference
+├── COVERAGE_REPORT.md          # Detailed test coverage by module
+├── TROUBLESHOOTING.md          # Common issues and solutions
+├── KNOWN_ISSUES.md             # Current limitations and workarounds
+├── ERROR_HANDLING_FIXES.md     # Consolidated error fix journey
+├── FEATURES.md                 # Feature comparison and capabilities
+├── VISION.md                   # Future plans and roadmap
+├── CONFIRMATION_SYSTEM.md      # Safety confirmation system
 └── internal/                    # Internal/development docs
+    ├── GITHUB_READY.md         # GitHub preparation summary
+    ├── DOCS_CLEANUP_PLAN.md    # Documentation cleanup plan
+    ├── claude_md_improvements.md # CLAUDE.md enhancement summary
+    ├── CLAUDE_CODE_PERSPECTIVE.md # AI's development perspective
+    ├── ERROR_HANDLING_JOURNEY.md # Technical error fixing journey
     ├── claude-code-implementation-guide.md
     ├── substack-mcp-plus-prd.md
     ├── retrospective.md
-    └── mcp_semantic_completeness.md
+    ├── mcp_semantic_completeness.md
+    └── substack-mcp-test-report.md
 ```
 
 ## 🤝 Contributing

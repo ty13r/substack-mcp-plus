@@ -1,10 +1,24 @@
 # Substack MCP Plus
 
 [![npm version](https://img.shields.io/npm/v/substack-mcp-plus.svg)](https://www.npmjs.com/package/substack-mcp-plus)
+[![npm downloads](https://img.shields.io/npm/dm/substack-mcp-plus.svg)](https://www.npmjs.com/package/substack-mcp-plus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
+[![Tests](https://github.com/ty13r/substack-mcp-plus/actions/workflows/ci.yml/badge.svg)](https://github.com/ty13r/substack-mcp-plus/actions/workflows/ci.yml)
 
 **The most advanced Substack MCP server available.** Create publication-ready posts with full rich text formatting, manage drafts, schedule posts, and more - all from Claude Desktop or any MCP-compatible client.
+
+## ⚠️ Important Disclaimers
+
+**This is an UNOFFICIAL tool** with no affiliation to Substack Inc.
+- We are not endorsed by or associated with Substack
+- This tool uses the unofficial [python-substack](https://github.com/ma2za/python-substack) library
+- Substack does not provide a public API; this tool uses reverse-engineered endpoints
+- Functionality may break if Substack changes their private API
+- Use at your own risk and in accordance with Substack's Terms of Service
+
+**[→ See all known issues and limitations](docs/KNOWN_ISSUES.md)**
 
 ## 🌟 Why Choose Substack MCP Plus?
 
@@ -67,12 +81,12 @@ This isn't just about one tool. It's about:
 
 Because when publishing is frictionless, ideas flow freely.
 
-**[→ Read our full vision and roadmap](docs/VISION.md)**
+**[→ Read our full vision](docs/VISION.md)** | **[→ See the development roadmap](docs/ROADMAP.md)**
 
 ## 📚 Documentation
 
 For detailed guides and documentation, see the [docs directory](docs/):
-- **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
+- **[Quick Start Guide](docs/QUICKSTART.md)** - Get up and running in 5 minutes
 - **[Authentication Guide](docs/authentication.md)** - Detailed setup instructions
 - **[Formatting Guide](docs/formatting.md)** - All supported formatting options with examples
 - **[Testing Guide](docs/testing_guide.md)** - Comprehensive testing instructions
@@ -432,13 +446,19 @@ substack-mcp-plus/
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Write tests for your changes
-4. Implement your feature
-5. Run tests to ensure everything passes
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
+We welcome contributions! Check out:
+- **[Current TODOs](docs/TODO.md)** - Specific tasks you can claim and work on
+- **[Contributing Guide](CONTRIBUTING.md)** - Detailed contribution guidelines
+- **[Roadmap](docs/ROADMAP.md)** - Future features and vision
+
+Quick steps:
+1. Find a task in [TODO.md](docs/TODO.md) or create an issue
+2. Fork the repository
+3. Create a feature branch (`git checkout -b feature/amazing-feature`)
+4. Write tests first (TDD required)
+5. Implement your feature
+6. Run tests to ensure everything passes
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
 8. Open a Pull Request
 
 ## 📄 License
@@ -447,9 +467,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Original [substack-mcp](https://github.com/marcomoauro/substack-mcp) by Marco Moauro
-- [python-substack](https://github.com/mit1280/python-substack) library
-- Model Context Protocol specification
+- Original [substack-mcp](https://github.com/marcomoauro/substack-mcp) by Marco Moauro - the foundation for this project
+- [python-substack](https://github.com/ma2za/python-substack) - unofficial Python library for Substack (not affiliated with Substack Inc.)
+- [Model Context Protocol](https://modelcontextprotocol.io) specification by Anthropic
+- The Substack team for creating an amazing platform (though we have no affiliation)
 
 ## 📝 Known Limitations
 
@@ -464,5 +485,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🆘 Support
 
-- For issues: Open an issue on [GitHub](https://github.com/your-username/substack-mcp-plus/issues)
-- For questions: Start a discussion in the [Discussions](https://github.com/your-username/substack-mcp-plus/discussions) tab
+- For issues: Open an issue on [GitHub](https://github.com/ty13r/substack-mcp-plus/issues)
+- For questions: Start a discussion in the [Discussions](https://github.com/ty13r/substack-mcp-plus/discussions) tab

@@ -2,6 +2,27 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Command Reference (Use These!)
+
+```bash
+# ALWAYS activate virtual environment first:
+source venv/bin/activate
+
+# Run tests (use python3!):
+python3 -m pytest                           # Run all tests
+python3 -m pytest tests/unit/test_foo.py -v # Run specific test
+python3 -m pytest --cov=src --cov-report=term # Check coverage
+
+# Code quality:
+black src tests     # Format code
+mypy src           # Type checking
+
+# Common fixes:
+# If "python: command not found" → use python3
+# If "ModuleNotFoundError" → activate venv first
+# If creating docs → put in docs/ not root!
+```
+
 # Interaction
 
 - Any time you interact with me, you MUST address me as "Sir"
@@ -30,6 +51,8 @@ Whenever you build out a new project and specifically start a new Claude.md - yo
 # Writing code
 
 - CRITICAL: NEVER USE --no-verify WHEN COMMITTING CODE
+- NEVER commit without running tests first
+- NEVER commit directly to main branch - use feature branches
 - We prefer simple, clean, maintainable solutions over clever or complex ones, even if the latter are more concise or performant. Readability and maintainability are primary concerns.
 - Make the smallest reasonable changes to get to the desired outcome. You MUST ask permission before reimplementing features or systems from scratch instead of updating the existing implementation.
 - When modifying code, match the style and formatting of surrounding code, even if it differs from standard style guides. Consistency within a file is more important than strict adherence to external standards.
@@ -56,18 +79,91 @@ Whenever you build out a new project and specifically start a new Claude.md - yo
 
 ## We practice TDD. That means:
 
-- Write tests before writing the implementation code
-- Only write enough code to make the failing test pass
-- Refactor code continuously while ensuring tests still pass
+- **RED**: Write tests FIRST - they MUST fail initially
+- **GREEN**: Write ONLY enough code to make tests pass
+- **REFACTOR**: Improve code while keeping tests green
+- **NEVER SKIP THIS PROCESS**
 
-### TDD Implementation Process
+### TDD Implementation Process (MANDATORY FOR ALL FEATURES)
 
-- Write a failing test that defines a desired function or improvement
-- Run the test to confirm it fails as expected
-- Write minimal code to make the test pass
-- Run the test to confirm success
-- Refactor code to improve design while keeping tests green
-- Repeat the cycle for each new feature or bugfix
+1. **PLAN** (with TodoWrite):
+   - Add task: "Write tests for [feature]"
+   - Add task: "Implement [feature]"
+   - Add task: "Refactor [feature] if needed"
+
+2. **RED PHASE**:
+   - Write failing test that defines desired behavior
+   - Run test to confirm it fails: `python3 -m pytest path/to/test -v`
+   - If test passes without implementation, the test is wrong
+
+3. **GREEN PHASE**:
+   - Write MINIMAL code to make test pass
+   - No extra features, no premature optimization
+   - Run test to confirm it passes
+
+4. **REFACTOR PHASE**:
+   - Improve code structure while tests stay green
+   - Run all tests after each change
+   - Update documentation if needed
+
+5. **COMPLETE**:
+   - Mark todos as completed
+   - Run full test suite
+   - Check coverage improved
+
+**VIOLATIONS**: If you implement before testing, you MUST:
+1. Stop immediately
+2. Comment out the implementation
+3. Write the tests
+4. Uncomment and adjust implementation
+
+# Common Development Pitfalls to Avoid
+
+## Python Commands
+- ALWAYS use `python3` instead of `python` - the latter often fails
+- ALWAYS check if virtual environment is activated before running Python commands
+- If a Python command fails, check: `source venv/bin/activate` (or `source venv312/bin/activate`)
+- Use absolute paths when running Python scripts: `python3 -m src.server` not `python src/server.py`
+
+## File and Directory Management
+- ALWAYS use the LS tool to verify a directory exists before creating files in it
+- NEVER assume a path exists - check first
+- NEW DOCUMENTATION MUST GO IN `docs/` - NOT in the root directory
+  - User guides, how-tos, explanations → `docs/`
+  - Internal/development docs → `docs/internal/`
+  - Only README, LICENSE, CHANGELOG, CONTRIBUTING, SECURITY stay in root
+- Before creating any file, use Read tool to check if it already exists
+
+## Test-Driven Development (MANDATORY)
+- **STOP! Before implementing ANY new feature:**
+  1. Use TodoWrite to plan the feature and tests
+  2. Write failing tests FIRST (in appropriate test file)
+  3. Run tests to confirm they fail: `python3 -m pytest path/to/test -v`
+  4. ONLY THEN implement the feature
+  5. Run tests again to confirm they pass
+  6. Update TodoWrite to mark tasks as completed
+- If you catch yourself implementing before testing, STOP and write tests
+- NO EXCEPTIONS - even for "simple" features
+
+## Post-Implementation Checklist
+After ANY code changes:
+1. Run tests: `python3 -m pytest`
+2. Run linting: `black src tests` 
+3. Run type checking: `mypy src`
+4. Check coverage: `python3 -m pytest --cov=src --cov-report=term`
+5. If any of these fail, fix before proceeding
+
+## Todo Management
+- ALWAYS use TodoWrite when starting a new task
+- Update todo status in real-time (pending → in_progress → completed)
+- Only ONE task should be in_progress at a time
+- Mark tasks completed IMMEDIATELY after finishing
+
+## Error Handling
+- When you see an error, READ IT CAREFULLY - don't just retry with different commands
+- If `python` fails, use `python3`
+- If imports fail, check virtual environment is activated
+- If file not found, verify the path with LS tool
 
 # Specific Technologies
 
@@ -99,17 +195,17 @@ node src/index.js
 ./ops/publish-npm.sh
 ```
 
-### Future Python Version
+### Current Python Version
 ```bash
 # Setup virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -e ".[dev]"
 
 # Run tests
-pytest -v
+python3 -m pytest -v
 
 # Format code
 black src tests
@@ -118,7 +214,10 @@ black src tests
 mypy src
 
 # Run the server
-python -m src.server
+python3 -m src.server
+
+# Check coverage
+python3 -m pytest --cov=src --cov-report=term
 ```
 
 ## Architecture
@@ -155,8 +254,28 @@ python -m src.server
 
 ## Important Notes
 
-1. This is a transformation project - check the PRD (`substack-mcp-plus-prd.md`) and implementation guide (`claude-code-implementation-guide.md`) for detailed requirements
-2. Follow TDD practices - write tests before implementation
-3. The goal is to create properly formatted posts that are ready to publish without manual editing
-4. Maintain MCP protocol compatibility throughout the transformation
-5. Error handling is crucial for network issues and authentication failures
+1. This is an UNOFFICIAL Substack tool - we have no affiliation with Substack Inc.
+2. The transformation from JavaScript to Python is COMPLETE - we're now in maintenance/improvement mode
+3. Current test coverage is 51% - improving this is a HIGH PRIORITY
+4. Known issues are documented in `docs/KNOWN_ISSUES.md` - check before implementing fixes
+5. The main text formatting issue (bold/italic showing as markdown) is our #1 bug to fix
+6. Follow TDD practices - write tests before implementation (NO EXCEPTIONS)
+7. Error handling is crucial for network issues and authentication failures
+
+## Project State Awareness
+
+Before starting ANY work:
+1. Check `docs/ROADMAP.md` for current priorities
+2. Check `docs/KNOWN_ISSUES.md` for existing problems
+3. Check `docs/COVERAGE_REPORT.md` for testing priorities
+4. Run `python3 -m pytest` to see current test status
+5. Use TodoRead to see any ongoing work
+
+## Starting a Work Session
+
+When beginning work (new conversation or returning):
+1. ALWAYS greet with "Sir" or agreed-upon name
+2. Use TodoRead immediately to check ongoing tasks
+3. If no todos exist, ask "What would you like to work on today, Sir?"
+4. Once task is clear, use TodoWrite to plan it out
+5. Follow TDD process for any code changes

@@ -1,5 +1,13 @@
 # Security Policy
 
+## ⚠️ Important Security Notice
+
+**This is an UNOFFICIAL tool** that interacts with Substack's private API endpoints:
+- We have no control over Substack's security measures or API changes
+- Your credentials are used to authenticate directly with Substack
+- We recommend using a dedicated Substack account for automation if possible
+- Always comply with Substack's Terms of Service and security policies
+
 ## 🔐 Security Best Practices
 
 When using Substack MCP Plus, please follow these security best practices:

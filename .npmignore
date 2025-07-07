@@ -6,21 +6,28 @@ test_*.py
 coverage/
 htmlcov/
 .coverage
+.coverage.*
 .pytest_cache/
+.mypy_cache/
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
+**/*.pyc
+**/*.pyo
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
 .eggs/
+*.egg
 
 # Version control
 .git/
 .github/
 .gitignore
+.gitattributes
 
 # Development tools
 .vscode/
@@ -28,47 +35,94 @@ dist/
 *.swp
 *.swo
 .DS_Store
-
-# Documentation source files (keep compiled docs)
-docs/*.md
-!docs/README.md
+Thumbs.db
 
 # Python virtual environments
 venv/
+venv*/
+venv312/
 env/
 .venv/
+.Python
+
+# Documentation (keep only user-facing docs)
+docs/internal/
+docs/COVERAGE_REPORT.md
+docs/TODO.md
+docs/ROADMAP.md
+docs/KNOWN_ISSUES.md
+docs/ERROR_HANDLING_FIXES.md
+docs/VISION.md
+docs/README.md
+docs/claude_desktop_test_checklist.md
+CLAUDE.md
 
 # CI/CD and operations
-ops/
-.github/
+ops/publish-pypi.sh
 .travis.yml
 .gitlab-ci.yml
+appveyor.yml
 
 # Development config
 .env
 .env.*
 !.env.example
-pyproject.toml
+setup.py
 setup.cfg
 requirements-dev.txt
 Makefile
+tox.ini
+.editorconfig
+.pylintrc
+
+# Project specific dev files
+debug_*.py
+generate_test_content.py
+health_check.py
+cursor_config.json
 
 # Temporary files
 *.log
 *.tmp
 *.bak
 *~
+*.cache
+.DS_Store
 
 # Test data
 test-data/
 fixtures/
 
-# Keep only essential files
-# The package needs:
+# Node modules (should be installed via postinstall)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python specific
+pip-log.txt
+pip-delete-this-directory.txt
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.manifest
+*.spec
+
+# Keep only essential files for NPM package:
 # - package.json
 # - src/ (all source code)
-# - scripts/ (postinstall)
+# - scripts/postinstall.js
+# - setup_auth.py
+# - setup.sh
+# - pyproject.toml (needed for pip install)
 # - README.md
 # - LICENSE
 # - CHANGELOG.md
-# - docs/README.md
+# - SECURITY.md
+# - CONTRIBUTING.md
+# - Essential user docs only

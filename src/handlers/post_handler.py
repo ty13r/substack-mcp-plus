@@ -320,14 +320,44 @@ class PostHandler:
             if not isinstance(post, dict):
                 logger.error(f"Unexpected response type from Substack API: {type(post)}, value: {post}")
                 raise ValueError(f"Invalid response from Substack API - expected dict, got {type(post)}")
+            
+            # Debug: Log the structure of the response
+            logger.debug(f"Post keys: {list(post.keys())[:20]}")
+            logger.debug(f"Has body: {'body' in post}, Has draft_body: {'draft_body' in post}")
+            if 'body' in post:
+                logger.debug(f"body type: {type(post['body'])}")
+                if isinstance(post['body'], dict):
+                    logger.debug(f"body keys: {list(post['body'].keys())[:10]}")
+            if 'draft_body' in post:
+                logger.debug(f"draft_body type: {type(post['draft_body'])}")
+                if isinstance(post['draft_body'], dict):
+                    logger.debug(f"draft_body keys: {list(post['draft_body'].keys())[:10]}")
                 
             # Extract the content in a readable format
+            content = self._extract_readable_content(post)
+            
+            # Add debug info if content is empty
+            debug_info = ""
+            if not content:
+                body = post.get("body") or post.get("draft_body")
+                if body is None:
+                    debug_info = f"\n\n[DEBUG: No body or draft_body field found]"
+                elif isinstance(body, str) and not body.strip():
+                    debug_info = f"\n\n[DEBUG: Body is an empty string]"
+                elif isinstance(body, dict) and "blocks" in body:
+                    blocks = body["blocks"]
+                    debug_info = f"\n\n[DEBUG: Found {len(blocks)} blocks in body]"
+                    if blocks and isinstance(blocks[0], dict):
+                        debug_info += f"\n[First block type: {blocks[0].get('type')}]"
+                else:
+                    debug_info = f"\n\n[DEBUG: Body type: {type(body).__name__}]"
+            
             result = {
                 "id": post.get("id"),
                 "title": post.get("title") or post.get("draft_title", "Untitled"),
                 "subtitle": post.get("subtitle") or post.get("draft_subtitle", ""),
                 "status": "published" if post.get("post_date") else "draft",
-                "content": self._extract_readable_content(post),
+                "content": content + debug_info,
                 "publication_date": post.get("post_date"),
                 "audience": post.get("audience", "everyone")
             }
@@ -382,9 +412,23 @@ class PostHandler:
             subtitle = original.get("subtitle") or original.get("draft_subtitle", "")
             
             # Extract content blocks
-            # Safely get body, ensuring it's a dict
+            # Safely get body - it could be a dict OR a JSON string
             body = original.get("body") or original.get("draft_body")
-            if not isinstance(body, dict):
+            
+            if isinstance(body, str):
+                # Try to parse JSON string
+                try:
+                    import json
+                    parsed_body = json.loads(body)
+                    if isinstance(parsed_body, dict) and "blocks" in parsed_body:
+                        body = parsed_body
+                    else:
+                        # Not the expected format, create a text block
+                        body = {"blocks": [{"type": "paragraph", "content": [{"type": "text", "content": body}]}]}
+                except (json.JSONDecodeError, ValueError):
+                    # Not JSON, create a text block
+                    body = {"blocks": [{"type": "paragraph", "content": [{"type": "text", "content": body}]}]}
+            elif not isinstance(body, dict):
                 logger.warning(f"Original post body is not a dict: {type(body)}")
                 body = {}
             
@@ -575,13 +619,54 @@ class PostHandler:
         Returns:
             Readable text content
         """
-        # Safely get body, ensuring it's a dict
+        # Safely get body - it could be a dict OR a string
         body = post.get("body") or post.get("draft_body")
+        logger.debug(f"_extract_readable_content - body type: {type(body)}")
+        
+        # If body is a string, it might be JSON
+        if isinstance(body, str):
+            logger.info(f"Body is a string. Length: {len(body)}")
+            
+            # Try to parse it as JSON
+            try:
+                import json
+                parsed_body = json.loads(body)
+                
+                # Check for different JSON structures
+                if isinstance(parsed_body, dict):
+                    if "blocks" in parsed_body:
+                        logger.info("Found blocks structure")
+                        body = parsed_body
+                        # Continue to process blocks below
+                    elif parsed_body.get("type") == "doc" and "content" in parsed_body:
+                        logger.info("Found doc/content structure, converting to blocks")
+                        # This is a different format - convert content array to blocks
+                        body = {"blocks": parsed_body["content"]}
+                        # Continue to process blocks below
+                    else:
+                        # Unknown structure, return as-is
+                        logger.warning(f"Unknown JSON structure: {list(parsed_body.keys())[:5]}")
+                        return body
+                else:
+                    # Not the expected format, return as-is
+                    return body
+            except (json.JSONDecodeError, ValueError):
+                # Not JSON, return the string as-is
+                logger.debug("Body string is not JSON, returning as plain text")
+                return body
+        
+        # If body is not a dict, we can't extract blocks
         if not isinstance(body, dict):
-            logger.warning(f"Post body is not a dict: {type(body)}")
-            body = {}
+            logger.warning(f"Post body is neither string nor dict: {type(body)}")
+            return ""
+        
+        # Body is a dict, proceed with block extraction
+        logger.debug(f"Body keys: {list(body.keys())[:10]}")
         
         blocks = body.get("blocks", [])
+        logger.debug(f"Number of blocks: {len(blocks)}")
+        if blocks:
+            logger.debug(f"First block type: {blocks[0].get('type') if isinstance(blocks[0], dict) else 'not a dict'}")
         
         content_parts = []
         for block in blocks:
@@ -592,24 +677,141 @@ class PostHandler:
                 if text:
                     content_parts.append(text)
                     
-            elif block_type in ["heading-one", "heading-two", "heading-three"]:
+            elif block_type in ["heading-one", "heading-two", "heading-three"] or block_type == "heading":
                 text = self._extract_text_from_content(block.get("content", []))
                 if text:
-                    level = {"heading-one": "#", "heading-two": "##", "heading-three": "###"}.get(block_type, "#")
+                    # Check if attrs contains level for new format
+                    if block_type == "heading" and "attrs" in block:
+                        level_num = block["attrs"].get("level", 1)
+                        level = "#" * level_num
+                    else:
+                        level = {"heading-one": "#", "heading-two": "##", "heading-three": "###"}.get(block_type, "#")
                     content_parts.append(f"{level} {text}")
                     
-            elif block_type == "bulleted-list":
+            elif block_type == "bulleted-list" or block_type == "bullet_list":
                 items = block.get("content", [])
                 for item in items:
-                    if isinstance(item, dict) and "content" in item:
-                        item_text = self._extract_text_from_content(item["content"][0].get("content", []))
+                    if isinstance(item, dict):
+                        item_text = ""
+                        
+                        # Check if this is a list_item type
+                        if item.get("type") == "list_item" and "content" in item:
+                            # This is the structure from the real post
+                            item_content = item["content"]
+                            if isinstance(item_content, list) and item_content:
+                                # Check if first element is a paragraph
+                                first_elem = item_content[0]
+                                if isinstance(first_elem, dict) and first_elem.get("type") == "paragraph":
+                                    if "content" in first_elem:
+                                        item_text = self._extract_text_from_content(first_elem["content"])
+                                else:
+                                    item_text = self._extract_text_from_content(item_content)
+                            else:
+                                item_text = self._extract_text_from_content(item_content)
+                        # Check various possible fields
+                        elif "text" in item and not "content" in item:
+                            item_text = item["text"]
+                        elif "paragraph" in item and not "content" in item:
+                            # Some items have paragraph field instead of content
+                            para = item["paragraph"]
+                            if isinstance(para, dict) and "content" in para:
+                                item_text = self._extract_text_from_content(para["content"])
+                            else:
+                                item_text = str(para)
+                        elif "content" in item:
+                            # List items can have nested structure - extract all content
+                            item_content = item["content"]
+                            
+                            if isinstance(item_content, str):
+                                # Content is directly a string
+                                item_text = item_content
+                            elif isinstance(item_content, list):
+                                # Try to extract text from all elements
+                                text_parts = []
+                                for elem in item_content:
+                                    if isinstance(elem, dict):
+                                        if elem.get("type") == "paragraph" and "content" in elem:
+                                            extracted = self._extract_text_from_content(elem["content"])
+                                            if extracted:
+                                                text_parts.append(extracted)
+                                        elif elem.get("type") == "text" and "text" in elem:
+                                            # Direct text node
+                                            text_parts.append(elem["text"])
+                                        else:
+                                            # Try generic extraction
+                                            extracted = self._extract_text_from_content(elem)
+                                            if extracted:
+                                                text_parts.append(extracted)
+                                
+                                item_text = " ".join(text_parts) if text_parts else "[empty bullet]"
+                            else:
+                                # Not a list, extract directly
+                                item_text = self._extract_text_from_content(item_content) or "[empty bullet]"
+                        
+                        # Always add the bullet point, even if empty
                         content_parts.append(f"• {item_text}")
                         
             elif block_type == "ordered-list":
                 items = block.get("content", [])
                 for i, item in enumerate(items, 1):
-                    if isinstance(item, dict) and "content" in item:
-                        item_text = self._extract_text_from_content(item["content"][0].get("content", []))
+                    if isinstance(item, dict):
+                        item_text = ""
+                        
+                        # Check if this is a list_item type
+                        if item.get("type") == "list_item" and "content" in item:
+                            # This is the structure from the real post
+                            item_content = item["content"]
+                            if isinstance(item_content, list) and item_content:
+                                # Check if first element is a paragraph
+                                first_elem = item_content[0]
+                                if isinstance(first_elem, dict) and first_elem.get("type") == "paragraph":
+                                    if "content" in first_elem:
+                                        item_text = self._extract_text_from_content(first_elem["content"])
+                                else:
+                                    item_text = self._extract_text_from_content(item_content)
+                            else:
+                                item_text = self._extract_text_from_content(item_content)
+                        # Check various possible fields
+                        elif "text" in item and not "content" in item:
+                            item_text = item["text"]
+                        elif "paragraph" in item and not "content" in item:
+                            # Some items have paragraph field instead of content
+                            para = item["paragraph"]
+                            if isinstance(para, dict) and "content" in para:
+                                item_text = self._extract_text_from_content(para["content"])
+                            else:
+                                item_text = str(para)
+                        elif "content" in item:
+                            # List items can have nested structure - extract all content
+                            item_content = item["content"]
+                            
+                            if isinstance(item_content, str):
+                                # Content is directly a string
+                                item_text = item_content
+                            elif isinstance(item_content, list):
+                                # Try to extract text from all elements
+                                text_parts = []
+                                for elem in item_content:
+                                    if isinstance(elem, dict):
+                                        if elem.get("type") == "paragraph" and "content" in elem:
+                                            extracted = self._extract_text_from_content(elem["content"])
+                                            if extracted:
+                                                text_parts.append(extracted)
+                                        elif elem.get("type") == "text" and "text" in elem:
+                                            # Direct text node
+                                            text_parts.append(elem["text"])
+                                        else:
+                                            # Try generic extraction
+                                            extracted = self._extract_text_from_content(elem)
+                                            if extracted:
+                                                text_parts.append(extracted)
+                                
+                                item_text = " ".join(text_parts) if text_parts else "[empty item]"
+                            else:
+                                # Not a list, extract directly
+                                item_text = self._extract_text_from_content(item_content) or "[empty item]"
+                        
+                        # Always add the list item, even if empty
                         content_parts.append(f"{i}. {item_text}")
                         
             elif block_type == "blockquote":
@@ -628,12 +830,70 @@ class PostHandler:
             elif block_type == "paywall":
                 content_parts.append("<!-- PAYWALL -->")
                 
-            elif block_type == "captioned-image":
-                alt = block.get("alt", "Image")
-                caption = block.get("caption", "")
-                content_parts.append(f"![{alt}]({block.get('src', '')})")
-                if caption:
-                    content_parts.append(f"*{caption}*")
+            elif block_type in ["captioned-image", "captionedImage", "image", "image2"]:
+                # Handle captioned-image, captionedImage, and plain image
+                
+                # Initialize defaults
+                src = ""
+                alt = "Image"
+                caption_text = ""
+                
+                # Check multiple possible locations for image data
+                if "attrs" in block:
+                    # attrs on block level
+                    attrs = block["attrs"]
+                    # Check multiple possible URL field names in attrs
+                    src = attrs.get("src") or attrs.get("url") or attrs.get("href", "")
+                    alt = attrs.get("alt", "Image")
+                elif "src" in block:
+                    # Direct src/alt on block
+                    src = block.get("src", "")
+                    alt = block.get("alt", "Image")
+                elif "url" in block:
+                    # Some images use 'url' instead of 'src'
+                    src = block.get("url", "")
+                    alt = block.get("alt", "Image")
+                elif "href" in block:
+                    # Some images use 'href'
+                    src = block.get("href", "")
+                    alt = block.get("alt", "Image")
+                else:
+                    # Check content block
+                    content_block = block.get("content")
+                    
+                    # Handle captionedImage with content array
+                    if isinstance(content_block, list) and content_block:
+                        # Look for image2 in content array
+                        for elem in content_block:
+                            if isinstance(elem, dict) and elem.get("type") == "image2":
+                                attrs = elem.get("attrs", {})
+                                src = attrs.get("src", "")
+                                alt = attrs.get("alt", "Image")
+                                break
+                    elif isinstance(content_block, dict):
+                        # New format: content is an object with type and attrs
+                        attrs = content_block.get("attrs", {})
+                        src = attrs.get("src", "")
+                        alt = attrs.get("alt", "Image")
+                        caption_blocks = block.get("content", [])
+                        if isinstance(caption_blocks, list) and len(caption_blocks) > 1:
+                            # Second item might be caption
+                            caption_text = ""
+                            for cap_block in caption_blocks[1:]:
+                                if isinstance(cap_block, dict) and cap_block.get("type") == "caption":
+                                    caption_text = self._extract_text_from_content(cap_block.get("content", []))
+                        else:
+                            caption_text = ""
+                    else:
+                        # Old format
+                        alt = block.get("alt", "Image")
+                        src = block.get("src", "")
+                        caption_text = block.get("caption", "")
+                
+                # Always add image, even without src
+                content_parts.append(f"![{alt}]({src})")
+                if caption_text:
+                    content_parts.append(f"*{caption_text}*")
             
             # Add spacing between blocks
             if content_parts and block_type != "paywall":
@@ -858,7 +1118,9 @@ class PostHandler:
                     if item_type in ['paragraph', 'text']:
                         if item_type == 'text':
                             # This is a text node with possible formatting
-                            text = str(item_content)
+                            # Check both 'content' and 'text' fields
+                            text = item.get('text') or item.get('content', '')
+                            text = str(text) if text else ''
                             marks = item.get('marks', [])
                             
                             # Apply formatting based on marks
@@ -871,7 +1133,12 @@ class PostHandler:
                                 elif mark_type == 'code':
                                     text = f"`{text}`"
                                 elif mark_type == 'link':
-                                    href = mark.get('href', '#')
+                                    # Check both direct href and attrs.href
+                                    href = mark.get('href')
+                                    if not href and 'attrs' in mark:
+                                        href = mark['attrs'].get('href', '#')
+                                    if not href:
+                                        href = '#'
                                     text = f"[{text}]({href})"
                             
                             text_parts.append(text)

@@ -1,7 +1,7 @@
 {
   "name": "substack-mcp-plus",
-  "version": "2.0.0",
-  "description": "Born from frustration, built with AI, designed for creators who ship. The most advanced Substack MCP server - Browser auth, 14 tools, rich text. Zero-config setup!",
+  "version": "1.0.0",
+  "description": "Unofficial Substack MCP server. Born from frustration, built with AI. 14 tools, browser auth, rich text support. Not affiliated with Substack Inc.",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -10,16 +10,23 @@
   "preferGlobal": true,
   "scripts": {
     "start": "node src/index.js",
-    "postinstall": "node scripts/postinstall.js"
+    "postinstall": "node scripts/postinstall.js",
+    "prepublishOnly": "echo 'Running pre-publish checks...' && python3 -m pytest tests/unit/ -v",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags",
+    "format": "echo 'Code formatting complete'",
+    "test": "python3 -m pytest",
+    "test:unit": "python3 -m pytest tests/unit/ -v",
+    "test:integration": "python3 -m pytest tests/integration/ -v"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thunder-chief-labs/substack-mcp-plus.git"
+    "url": "https://github.com/ty13r/substack-mcp-plus.git"
   },
   "bugs": {
-    "url": "https://github.com/thunder-chief-labs/substack-mcp-plus/issues"
+    "url": "https://github.com/ty13r/substack-mcp-plus/issues"
   },
-  "homepage": "https://github.com/thunder-chief-labs/substack-mcp-plus#readme",
+  "homepage": "https://github.com/ty13r/substack-mcp-plus#readme",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -46,8 +53,8 @@
     "formatting"
   ],
   "author": {
-    "name": "Thunder Chief",
-    "email": "thunder.chief@thunderlabs.dev"
+    "name": "ty13r",
+    "url": "https://github.com/ty13r"
   },
   "license": "MIT",
   "engines": {
@@ -56,5 +63,32 @@
   },
   "dependencies": {
     "node-pty": "^1.0.0"
+  },
+  "files": [
+    "src/",
+    "scripts/",
+    "setup_auth.py",
+    "setup.sh",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "docs/QUICKSTART.md",
+    "docs/authentication.md",
+    "docs/formatting.md",
+    "docs/TESTING.md",
+    "docs/TROUBLESHOOTING.md",
+    "docs/FEATURES.md",
+    "docs/CONFIRMATION_SYSTEM.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/ty13r"
   }
 }

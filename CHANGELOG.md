@@ -5,7 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2025-01-06
+## [1.0.0] - 2025-01-07
+
+**Complete rewrite from scratch** - This is not an update but an entirely new implementation:
+- Transformed from JavaScript-only to Python/JavaScript hybrid architecture
+- Replaced session token auth with secure browser-based authentication
+- Expanded from 1 basic tool to 14 comprehensive tools
+- Added full rich text formatting support (was plain text only)
+
+### Added
+- Comprehensive GitHub repository setup:
+  - Issue templates for bug reports and feature requests
+  - Pull request template
+  - GitHub Actions CI/CD workflow
+  - CONTRIBUTING.md with detailed guidelines
+  - LICENSE file (MIT)
+  - docs/ROADMAP.md with prioritized next steps
+  - docs/TODO.md with current work items and subtasks for contributors
+  - docs/KNOWN_ISSUES.md documenting all current limitations
+  - docs/COVERAGE_REPORT.md with detailed test coverage by module
+- Enhanced documentation:
+  - Complete docs/README.md index
+  - tests/README.md for test suite documentation
+  - Improved badges in main README
+- Important disclaimers:
+  - Clear "UNOFFICIAL tool" warnings throughout
+  - No affiliation with Substack Inc. notices
+  - API limitations and security notices
+- CLAUDE.md improvements for better AI development:
+  - Quick command reference with python3
+  - Common pitfalls section
+  - Mandatory TDD process
+  - File organization rules
+  - Project state awareness checklist
+
+### Changed
+- Updated all repository URLs to ty13r/substack-mcp-plus
+- Updated package descriptions to clarify unofficial status
+- Enhanced .gitignore with comprehensive patterns
+- Fixed author information in package metadata
+- Reorganized documentation structure:
+  - Moved ROADMAP.md to docs/
+  - Moved QUICKSTART.md to docs/
+  - Moved GITHUB_READY.md to docs/internal/
+  - Updated all document references
+- Consolidated documentation (reduced from 21 to 15 files):
+  - Combined 4 error fix summaries into ERROR_HANDLING_FIXES.md
+  - Merged testing guides into comprehensive TESTING.md
+  - Moved development journey files to internal/
+  - Removed redundant documentation files
+
+### Fixed
+- Text content extraction from Substack posts (get_post_content tool)
+- Bullet list content now properly extracted (bullet_list and list_item support)
+- Image URLs now correctly parsed from posts (image2 type support)
+- Error handling for various API response formats
+- Mock client in tests now uses numeric user ID instead of string
+
+### Known Issues (Documented)
+- Text formatting (bold/italic) displays as markdown syntax
+- Links display as markdown syntax instead of clickable
+- Blockquotes show with > prefix instead of styled blocks
+- Rate limiting not yet implemented
+
+## [Pre-1.0.0] - Fork History
 
 ### 🎉 Major Release - The Most Advanced Substack MCP Server
 
@@ -52,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Production Quality**:
   - 180+ comprehensive tests
-  - 61% code coverage
+  - Test coverage needs improvement (currently 51% - see [Coverage Report](docs/COVERAGE_REPORT.md))
   - Input validation on all methods
   - Detailed error messages
   - Secure file handling
@@ -75,6 +138,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Progress indicators during setup
 - Comprehensive documentation
 - Clean API design
+- Test-Driven Development approach
+- 180+ tests with 51% coverage (detailed breakdown in [Coverage Report](docs/COVERAGE_REPORT.md))
+
+### Development Journey
+- Built entirely with AI assistance (Claude Code)
+- Zero lines of code written by human
+- Completed in under 24 hours
+- Proved AI + TDD = production quality
 
 ## [1.0.6] - Previous Release
 - Original JavaScript implementation by Marco Moauro

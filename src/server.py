@@ -745,6 +745,18 @@ class SubstackMCPServer:
                             text=f"❌ Failed to get subscriber count: {str(e)}"
                         )]
                     
+                elif name == "debug_post_structure":
+                    # Temporary debug tool
+                    from src.tools.debug_post_structure import debug_post_structure
+                    post_handler = PostHandler(client)
+                    result = await debug_post_structure(post_handler, arguments["post_id"])
+                    
+                    import json
+                    return [TextContent(
+                        type="text",
+                        text=json.dumps(result, indent=2)
+                    )]
+                    
                 elif name == "preview_draft":
                     try:
                         post_handler = PostHandler(client)
