@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-07
+
+### Fixed
+- Updated Claude Desktop configuration examples to include required SUBSTACK_PUBLICATION_URL
+- Added clear instructions for configuring alongside other MCP servers
+- Fixed configuration examples in quickstart and CLI usage docs
+
+### Documentation
+- Added example claude-desktop-config.json file
+- Improved clarity on replacing YOUR-PUBLICATION placeholder
+
 ## [1.0.0] - 2025-01-07
 
 **Complete rewrite from scratch** - This is not an update but an entirely new implementation:
