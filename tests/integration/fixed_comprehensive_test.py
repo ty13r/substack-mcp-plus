@@ -16,13 +16,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 async def create_fixed_comprehensive_test():
     """Create comprehensive test post with FIXED implementation"""
-    
+
     # Authenticate
     auth_handler = AuthHandler()
     client = await auth_handler.authenticate()
-    
+
     # Create comprehensive test content with ALL formatting types
     content = """# 🎯 FIXED Comprehensive Markdown Test
 
@@ -351,45 +352,49 @@ Thank you for testing our **Substack MCP Plus** server! 🚀✨
 
     # Create the post handler
     post_handler = PostHandler(client)
-    
+
     print("Creating FIXED comprehensive test post with ALL formatting...")
-    
+
     try:
         # Create the draft
         result = await post_handler.create_draft(
             title="🎯 FIXED: Complete Markdown Formatting Test - All Features Working",
             content=content,
             subtitle="Comprehensive demonstration of every markdown feature with the corrected python-substack integration",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = result.get('id')
+
+        draft_id = result.get("id")
         print(f"✅ Draft created successfully!")
         print(f"📝 Draft ID: {draft_id}")
         print(f"📋 Title: {result.get('draft_title', 'Unknown')}")
-        
+
         # Publish the draft immediately
         print(f"\n🚀 Publishing draft {draft_id}...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Post published successfully!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
         print(f"📅 Published at: {publish_result.get('post_date')}")
         print(f"📧 Email sent at: {publish_result.get('email_sent_at')}")
-        
+
         # Get the slug for the URL
-        slug = publish_result.get('slug')
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
-        print(f"\n🎉 Check your Substack publication to see ALL formatting working correctly!")
+
+        print(
+            f"\n🎉 Check your Substack publication to see ALL formatting working correctly!"
+        )
         print(f"🎯 This demonstrates the COMPLETE functionality of your MCP server!")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(create_fixed_comprehensive_test())

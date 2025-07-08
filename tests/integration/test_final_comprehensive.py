@@ -15,17 +15,18 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_final_comprehensive():
     print("🧪 Final comprehensive test with all fixes...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Comprehensive content that should work
         content = """# 🎯 Final Comprehensive MCP Test
 
@@ -172,41 +173,44 @@ The MCP server is fully functional and ready to help you create beautiful Substa
 *Created with Substack MCP Plus - Making newsletter writing effortless!*"""
 
         print("📝 Creating final comprehensive test post...")
-        
+
         create_result = await post_handler.create_draft(
             title="🎯 Final Comprehensive MCP Test - All Features",
             content=content,
             subtitle="Demonstrating every feature of our Substack MCP server",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Draft created: {draft_id}")
-        
+
         # Publish
         print("🚀 Publishing...")
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Published successfully!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
+
         # Verify content
-        if 'body' in publish_result and isinstance(publish_result['body'], str):
+        if "body" in publish_result and isinstance(publish_result["body"], str):
             import json
-            body = json.loads(publish_result['body'])
+
+            body = json.loads(publish_result["body"])
             print(f"\n📊 Published with {len(body.get('content', []))} content blocks")
-        
+
         print(f"\n🎯 COMPREHENSIVE TEST COMPLETE!")
         print(f"All features have been tested and are working correctly.")
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_final_comprehensive())

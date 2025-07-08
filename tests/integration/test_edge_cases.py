@@ -16,23 +16,24 @@ from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 from src.handlers.image_handler import ImageHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_edge_cases():
     print("🧪 Testing edge cases - pushing system limits...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
         image_handler = ImageHandler(client)
-        
+
         print("✅ Authentication successful - proceeding with edge case tests...")
-        
+
         # Test 1: Special characters and Unicode in titles/content
         print("\n📝 Test 1: Special characters and Unicode...")
-        
+
         unicode_content = """# 🚀 Unicode & Special Characters Test 测试
 
 This post tests **special characters** and Unicode support:
@@ -104,21 +105,21 @@ Surrogate pairs: 𝕌𝕟𝕚𝕔𝕠𝕕𝕖 𝔼𝕞𝔤𝕚𝔫𝔢"""
                 title="🌍 Unicode & Special Characters Test 测试 — àáâãäå",
                 content=unicode_content,
                 subtitle="Testing émojis, ünïcödé, 中文, العربية, русский, and ¿special punctuation?",
-                content_type="markdown"
+                content_type="markdown",
             )
-            
-            unicode_draft_id = unicode_result.get('id')
+
+            unicode_draft_id = unicode_result.get("id")
             print(f"✅ Unicode post created successfully: {unicode_draft_id}")
-            
+
         except Exception as e:
             print(f"❌ Unicode test failed: {str(e)[:150]}...")
-        
+
         # Test 2: Extremely long content
         print("\n📝 Test 2: Extremely long content...")
-        
+
         try:
             print("   Generating very long content (50,000+ characters)...")
-            
+
             # Generate massive content
             long_sections = []
             for i in range(100):
@@ -157,7 +158,7 @@ print(f"Section {{result['section']}} completed")
 > "This is blockquote number {i+1} in our comprehensive test. It contains meaningful content that demonstrates the system's ability to handle large volumes of text without degradation in performance or functionality."
 """
                 long_sections.append(section)
-            
+
             very_long_content = f"""# Extremely Long Content Test
 
 This post contains over 50,000 characters to test system limits.
@@ -176,30 +177,30 @@ This concludes our {len(long_sections)}-section mega-post with approximately {le
 **Sections**: {len(long_sections)}
 **Processing status**: ✅ SUCCESS
 """
-            
+
             content_length = len(very_long_content)
             print(f"   Content generated: {content_length:,} characters")
-            
+
             long_result = await post_handler.create_draft(
                 title=f"📚 Mega Post Test - {content_length:,} Characters",
                 content=very_long_content,
                 subtitle=f"Testing system limits with {content_length:,} character post",
-                content_type="markdown"
+                content_type="markdown",
             )
-            
-            long_draft_id = long_result.get('id')
+
+            long_draft_id = long_result.get("id")
             print(f"✅ Extremely long post created successfully: {long_draft_id}")
-            
+
             # Cleanup immediately due to size
             client.delete_draft(long_draft_id)
             print(f"   ✅ Cleaned up large post to save space")
-            
+
         except Exception as e:
             print(f"❌ Long content test failed: {str(e)[:150]}...")
-        
+
         # Test 3: Complex nested structures
         print("\n📝 Test 3: Complex nested structures...")
-        
+
         nested_content = """# Complex Nested Structures Test
 
 ## Multi-level Lists
@@ -329,46 +330,52 @@ This tests maximum nesting complexity across all supported markdown elements."""
                 title="🏗️ Complex Nested Structures Test",
                 content=nested_content,
                 subtitle="Testing deeply nested lists, code blocks, and blockquotes",
-                content_type="markdown"
+                content_type="markdown",
             )
-            
-            nested_draft_id = nested_result.get('id')
+
+            nested_draft_id = nested_result.get("id")
             print(f"✅ Complex nested post created successfully: {nested_draft_id}")
-            
+
         except Exception as e:
             print(f"❌ Nested structures test failed: {str(e)[:150]}...")
-        
+
         # Test 4: Edge case file types and sizes for images
         print("\n📝 Test 4: Edge case image uploads...")
-        
+
         # Create various test image files
         test_images = []
-        
+
         try:
             print("   Creating edge case image files...")
-            
+
             # Very small image (1x1 pixel PNG)
-            tiny_png = bytes.fromhex('89504e470d0a1a0a0000000d494844520000000100000001080600000037f7c24e000000124944415478da626000024000004c0001000000000000')
+            tiny_png = bytes.fromhex(
+                "89504e470d0a1a0a0000000d494844520000000100000001080600000037f7c24e000000124944415478da626000024000004c0001000000000000"
+            )
             tiny_file = "/tmp/tiny_1x1.png"
-            with open(tiny_file, 'wb') as f:
+            with open(tiny_file, "wb") as f:
                 f.write(tiny_png)
             test_images.append(("tiny", tiny_file))
-            
+
             # File with spaces and special characters
             special_name = "/tmp/test image with spaces & special chars (2025).png"
-            with open(special_name, 'wb') as f:
+            with open(special_name, "wb") as f:
                 f.write(tiny_png)
             test_images.append(("special_name", special_name))
-            
+
             # Test each image
             for test_type, image_path in test_images:
                 try:
-                    print(f"   Testing {test_type} image: {os.path.basename(image_path)}")
+                    print(
+                        f"   Testing {test_type} image: {os.path.basename(image_path)}"
+                    )
                     result = await image_handler.upload_image(image_path)
-                    print(f"   ✅ {test_type} upload successful: {result.get('url')[:50]}...")
+                    print(
+                        f"   ✅ {test_type} upload successful: {result.get('url')[:50]}..."
+                    )
                 except Exception as e:
                     print(f"   ❌ {test_type} upload failed: {str(e)[:100]}...")
-            
+
         except Exception as e:
             print(f"❌ Image edge case setup failed: {str(e)[:100]}...")
         finally:
@@ -379,15 +386,15 @@ This tests maximum nesting complexity across all supported markdown elements."""
                         os.unlink(image_path)
                 except:
                     pass
-        
+
         # Test 5: Stress test - Multiple rapid operations
         print("\n📝 Test 5: Stress test - rapid operations...")
-        
+
         stress_drafts = []
-        
+
         try:
             print("   Creating multiple drafts rapidly...")
-            
+
             for i in range(5):
                 stress_content = f"""# Stress Test Draft {i+1}
 
@@ -410,15 +417,17 @@ Created at: {asyncio.get_event_loop().time()}"""
                     title=f"⚡ Stress Test {i+1}/5",
                     content=stress_content,
                     subtitle=f"Rapid creation test #{i+1}",
-                    content_type="markdown"
+                    content_type="markdown",
                 )
-                
-                draft_id = result.get('id')
+
+                draft_id = result.get("id")
                 stress_drafts.append(draft_id)
                 print(f"   ✅ Stress draft {i+1} created: {draft_id}")
-            
-            print(f"✅ All {len(stress_drafts)} stress test drafts created successfully")
-            
+
+            print(
+                f"✅ All {len(stress_drafts)} stress test drafts created successfully"
+            )
+
             # Cleanup stress test drafts
             print("   Cleaning up stress test drafts...")
             for draft_id in stress_drafts:
@@ -427,37 +436,40 @@ Created at: {asyncio.get_event_loop().time()}"""
                     print(f"   ✅ Cleaned up: {draft_id}")
                 except:
                     print(f"   ⚠️ Cleanup failed: {draft_id}")
-            
+
         except Exception as e:
             print(f"❌ Stress test failed: {str(e)[:150]}...")
-        
+
         # Test 6: Boundary value testing
         print("\n📝 Test 6: Boundary value testing...")
-        
+
         try:
             print("   Testing with edge case titles and subtitles...")
-            
+
             # Very long title
             long_title = "🚀 " + "Very Long Title " * 20 + "Edge Case Test"
-            long_subtitle = "This is an extremely long subtitle that tests the boundaries of what Substack will accept for subtitle length in posts created through our MCP server. " * 3
-            
+            long_subtitle = (
+                "This is an extremely long subtitle that tests the boundaries of what Substack will accept for subtitle length in posts created through our MCP server. "
+                * 3
+            )
+
             boundary_result = await post_handler.create_draft(
                 title=long_title[:200],  # Truncate if too long
                 content="# Boundary Value Test\n\nTesting edge cases for title and subtitle lengths.",
                 subtitle=long_subtitle[:300],  # Truncate if too long
-                content_type="markdown"
+                content_type="markdown",
             )
-            
-            boundary_draft_id = boundary_result.get('id')
+
+            boundary_draft_id = boundary_result.get("id")
             print(f"✅ Boundary value test successful: {boundary_draft_id}")
-            
+
             # Cleanup
             client.delete_draft(boundary_draft_id)
             print(f"   ✅ Cleaned up boundary test draft")
-            
+
         except Exception as e:
             print(f"❌ Boundary value test failed: {str(e)[:150]}...")
-        
+
         print(f"\n🎉 EDGE CASE TESTING COMPLETE!")
         print(f"📊 Test Results:")
         print(f"   ✅ Unicode & special characters: Tested")
@@ -467,11 +479,13 @@ Created at: {asyncio.get_event_loop().time()}"""
         print(f"   ✅ Stress test (rapid operations): Tested")
         print(f"   ✅ Boundary value testing: Tested")
         print(f"\n🏆 System handles edge cases robustly!")
-        
+
     except Exception as e:
         print(f"❌ Edge case test setup failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_edge_cases())

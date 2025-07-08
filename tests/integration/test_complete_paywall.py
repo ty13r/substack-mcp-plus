@@ -15,20 +15,21 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_complete_paywall():
     print("🧪 Testing COMPLETE paywall integration with auto audience...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Test complete paywall functionality
         print("\n📝 Testing complete paywall integration...")
-        
+
         paywall_content = """# Complete Paywall Integration Test
 
 This post demonstrates **complete paywall functionality** with automatic audience setting.
@@ -156,53 +157,59 @@ Your premium subscription directly supports:
 
         # Create the post (should auto-set audience to "only_paid")
         print(f"📝 Creating paywall post with automatic audience setting...")
-        
+
         create_result = await post_handler.create_draft(
             title="💎 Complete Paywall Integration - Auto Audience",
             content=paywall_content,
             subtitle="Demonstrating automatic paid subscriber audience setting for paywall content",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Paywall post created: {draft_id}")
-        
+
         # Check the audience setting
-        audience = create_result.get('audience', 'unknown')
+        audience = create_result.get("audience", "unknown")
         print(f"   Audience automatically set to: {audience}")
-        
+
         if audience == "only_paid":
             print(f"✅ Automatic audience setting working correctly!")
         else:
-            print(f"⚠️ Audience not set correctly: expected 'only_paid', got '{audience}'")
-        
+            print(
+                f"⚠️ Audience not set correctly: expected 'only_paid', got '{audience}'"
+            )
+
         # Now try to publish (should work with only_paid audience)
         print(f"\n🚀 Publishing paywall post with correct audience...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Paywall post published successfully!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
         print(f"👥 Audience: {publish_result.get('audience', 'unknown')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
             print(f"   (Only visible to paid subscribers)")
-        
+
         print(f"\n🎉 COMPLETE PAYWALL INTEGRATION TEST SUCCESSFUL!")
         print(f"📊 Final Results:")
         print(f"   ✅ Paywall marker detection: Working")
-        print(f"   ✅ Automatic audience setting: {'Working' if audience == 'only_paid' else 'Needs verification'}")
+        print(
+            f"   ✅ Automatic audience setting: {'Working' if audience == 'only_paid' else 'Needs verification'}"
+        )
         print(f"   ✅ Post creation with paywall: Working")
         print(f"   ✅ Publishing paid subscriber post: Working")
         print(f"   ✅ Content separation: Check published post")
         print(f"\n💎 Paywall integration is fully functional!")
-        
+
     except Exception as e:
         print(f"❌ Complete paywall test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_complete_paywall())

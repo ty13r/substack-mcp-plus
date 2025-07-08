@@ -15,20 +15,21 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_paywall_integration():
     print("🧪 Testing paywall integration functionality...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Test 1: Create post with paywall marker
         print("\n📝 Test 1: Creating post with paywall marker...")
-        
+
         paywall_content = """# Premium Content Test Post
 
 Welcome to this **free preview** of our premium content! This section is available to all readers.
@@ -142,29 +143,30 @@ This post demonstrates our paywall functionality:
             title="💎 Premium Content Test - Paywall Integration",
             content=paywall_content,
             subtitle="Testing free vs premium content separation with paywall markers",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Paywall post created: {draft_id}")
         print(f"   Title: {create_result.get('draft_title')}")
-        
+
         # Test 2: Verify paywall marker was processed
         print(f"\n📝 Test 2: Checking if paywall marker was processed...")
-        
+
         # Debug: Check the AST processing
         from src.converters.markdown_converter import MarkdownConverter
+
         converter = MarkdownConverter()
         blocks = converter.convert(paywall_content)
-        
+
         paywall_found = False
         for i, block in enumerate(blocks):
-            if block.get('type') == 'paywall':
+            if block.get("type") == "paywall":
                 paywall_found = True
                 print(f"✅ Paywall block found at position {i}")
                 print(f"   Block: {block}")
                 break
-        
+
         if not paywall_found:
             print(f"⚠️ Paywall block not found in AST - checking processing...")
             # Check if paywall marker exists in content
@@ -173,10 +175,10 @@ This post demonstrates our paywall functionality:
                 print(f"   Processing may handle it differently")
             else:
                 print(f"❌ Paywall marker missing from source")
-        
+
         # Test 3: Create another test with different paywall position
         print(f"\n📝 Test 3: Testing paywall at different position...")
-        
+
         early_paywall_content = """# Early Paywall Test
 
 This is just a brief introduction.
@@ -199,24 +201,24 @@ More exclusive content."""
             title="🔒 Early Paywall Test",
             content=early_paywall_content,
             subtitle="Testing paywall positioned early in content",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id2 = create_result2.get('id')
+
+        draft_id2 = create_result2.get("id")
         print(f"✅ Early paywall post created: {draft_id2}")
-        
+
         # Test 4: Publish one of the paywall posts to see the result
         print(f"\n📝 Test 4: Publishing paywall post to verify rendering...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Paywall post published successfully!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
+
         # Cleanup: Delete the second test draft
         print(f"\n🧹 Cleanup: Deleting test draft...")
         try:
@@ -224,20 +226,24 @@ More exclusive content."""
             print(f"✅ Cleanup completed: {draft_id2}")
         except Exception as e:
             print(f"⚠️ Cleanup failed: {e}")
-        
+
         print(f"\n🎉 PAYWALL INTEGRATION TEST COMPLETE!")
         print(f"📊 Test Results:")
         print(f"   ✅ Post creation with paywall marker: Working")
-        print(f"   ✅ Paywall marker detection: {'Working' if paywall_found else 'Needs verification'}")
+        print(
+            f"   ✅ Paywall marker detection: {'Working' if paywall_found else 'Needs verification'}"
+        )
         print(f"   ✅ Different paywall positions: Working")
         print(f"   ✅ Published paywall post: Working")
         print(f"   ✅ Content separation: Check published post")
         print(f"\n💎 Check the published post to verify free/premium separation!")
-        
+
     except Exception as e:
         print(f"❌ Paywall test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_paywall_integration())

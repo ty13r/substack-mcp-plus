@@ -15,17 +15,18 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_final_code_blocks():
     print("🧪 Final test of code block functionality...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Test content with properly formatted code blocks
         content = """# Final Code Block Test
 
@@ -101,41 +102,43 @@ All code blocks should now:
 - ✅ Have proper visual separation"""
 
         print("📝 Creating final test post...")
-        
+
         create_result = await post_handler.create_draft(
             title="✅ Final Code Block Test - Properly Formatted",
             content=content,
             subtitle="Verifying code blocks display correctly with all fixes applied",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Final test post created: {draft_id}")
-        
+
         # Publish immediately
         print(f"🚀 Publishing final test...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Final test published!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
+
         print(f"\n🎯 FINAL VERIFICATION:")
         print(f"   Check the published post to confirm:")
         print(f"   - Code blocks appear as blocks (not inline)")
-        print(f"   - Indentation is preserved") 
+        print(f"   - Indentation is preserved")
         print(f"   - Line breaks are maintained")
         print(f"   - Syntax highlighting (if supported)")
         print(f"\n✅ Code block fix complete!")
-        
+
     except Exception as e:
         print(f"❌ Final test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_final_code_blocks())

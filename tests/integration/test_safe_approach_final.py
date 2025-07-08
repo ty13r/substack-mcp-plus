@@ -15,17 +15,18 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_safe_approach_final():
     print("🧪 Final test with safe approach...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Comprehensive test content
         content = """# Safe Approach - Final Test
 
@@ -112,35 +113,37 @@ These are acceptable trade-offs for 100% reliable content display.
 🎉 **The Substack MCP Plus server is ready for production use!**"""
 
         print("📝 Creating final test post...")
-        
+
         create_result = await post_handler.create_draft(
             title="✅ Safe Approach - Production Ready",
             content=content,
             subtitle="Reliable content display with our MCP server",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Draft created: {draft_id}")
-        
+
         # Publish
         print("🚀 Publishing...")
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Published!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
+
         print("\n🎯 PRODUCTION READY!")
         print("The MCP server is working reliably with the safe approach.")
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_safe_approach_final())

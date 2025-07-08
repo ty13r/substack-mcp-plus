@@ -15,17 +15,18 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 @pytest.mark.requires_auth
 @pytest.mark.integration
 async def test_comprehensive_formatting():
     print("🧪 Testing ALL formatting options comprehensively...")
-    
+
     try:
         # Authenticate and create handlers
         auth = AuthHandler()
         client = await auth.authenticate()
         post_handler = PostHandler(client)
-        
+
         # Comprehensive test content with ALL formatting options
         content = """# 🎯 Ultimate Substack Formatting Test
 
@@ -815,29 +816,29 @@ If you can see this entire post with all formatting intact, then our MCP server 
 **The ultimate test is complete! 🎉**"""
 
         print("📝 Creating comprehensive formatting test post...")
-        
+
         create_result = await post_handler.create_draft(
             title="🎯 Ultimate Substack Formatting Test - ALL Options",
             content=content,
             subtitle="Testing every single formatting option to ensure complete MCP server functionality",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = create_result.get('id')
+
+        draft_id = create_result.get("id")
         print(f"✅ Comprehensive test post created: {draft_id}")
-        
+
         # Publish immediately
         print(f"🚀 Publishing comprehensive test post...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Comprehensive test post published!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
-        
-        slug = publish_result.get('slug')
+
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
+
         print(f"\n🎯 COMPREHENSIVE TEST COMPLETE:")
         print(f"   ✅ All 6 header levels")
         print(f"   ✅ Text formatting (bold, italic, combined)")
@@ -850,11 +851,13 @@ If you can see this entire post with all formatting intact, then our MCP server 
         print(f"   ✅ Edge cases and boundaries")
         print(f"   ✅ Enhanced code blocks with language headers")
         print(f"\n📖 Check the published post to verify ALL formatting!")
-        
+
     except Exception as e:
         print(f"❌ Comprehensive test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_comprehensive_formatting())
