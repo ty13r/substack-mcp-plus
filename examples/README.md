@@ -21,7 +21,7 @@ This directory contains examples demonstrating how to use the Substack MCP Plus 
    npm install -g substack-mcp-plus
    
    # Run authentication setup
-   python setup_auth.py
+   substack-mcp-plus-setup
    ```
 
 2. **Configure Claude Desktop** - See [cli/direct-usage.md](cli/direct-usage.md)

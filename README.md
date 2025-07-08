@@ -41,7 +41,11 @@ Create, update, publish, schedule, duplicate posts and more. The most comprehens
 
 ### 🚀 Zero-Config Setup
 ```bash
+# Install the package
 npm install -g substack-mcp-plus
+
+# Run the setup wizard
+substack-mcp-plus-setup
 ```
 That's it! Automatic Python detection, virtual environment setup, and dependency installation.
 

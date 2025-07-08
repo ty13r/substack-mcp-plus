@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "substack-mcp-plus": "src/index.js"
+    "substack-mcp-plus": "src/index.js",
+    "substack-mcp-plus-setup": "src/setup.js"
   },
   "preferGlobal": true,
   "scripts": {

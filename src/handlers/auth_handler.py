@@ -58,7 +58,7 @@ class AuthHandler:
         
         if not stored_token and not has_env_auth:
             raise ValueError(
-                "No authentication found. Please run 'python setup_auth.py' to configure authentication, "
+                "No authentication found. Please run 'substack-mcp-plus-setup' to configure authentication, "
                 "or provide SUBSTACK_EMAIL/SUBSTACK_PASSWORD or SUBSTACK_SESSION_TOKEN environment variables."
             )
         
@@ -180,14 +180,14 @@ class AuthHandler:
                 logger.error(f"Email/password authentication failed: {e}")
                 if "captcha" in str(e).lower():
                     raise Exception(
-                        "CAPTCHA detected. Please run 'python setup_auth.py' to authenticate "
+                        "CAPTCHA detected. Please run 'substack-mcp-plus-setup' to authenticate "
                         "through the browser and set up automatic token management."
                     )
                 raise
         
         raise Exception(
             "No valid authentication method available. "
-            "Please run 'python setup_auth.py' to configure authentication."
+            "Please run 'substack-mcp-plus-setup' to configure authentication."
         )
     
     def _create_session_client(self, session_token: str) -> SubstackApi:
@@ -235,7 +235,7 @@ class AuthHandler:
         try:
             # This would require re-authenticating through the browser
             # For now, we just log that refresh is needed
-            logger.info("Token refresh needed - user should run setup_auth.py again")
+            logger.info("Token refresh needed - user should run substack-mcp-plus-setup again")
             
             # In a future enhancement, we could:
             # 1. Notify the user through the MCP interface

@@ -9,7 +9,7 @@ Get up and running with Substack MCP Plus in under 2 minutes!
 npm install -g substack-mcp-plus
 
 # Run the authentication setup wizard  
-python setup_auth.py
+substack-mcp-plus-setup
 ```
 
 **That's it!** The setup wizard handles everything:

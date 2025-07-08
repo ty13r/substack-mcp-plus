@@ -88,4 +88,4 @@ echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"capabilities": {}},
 
 1. **"Python not found"**: Make sure Python 3.10+ is installed
 2. **"Module not found"**: Run `pip install -e .` in the project directory
-3. **"Authentication failed"**: Run `python setup_auth.py` to re-authenticate
+3. **"Authentication failed"**: Run `substack-mcp-plus-setup` to re-authenticate
