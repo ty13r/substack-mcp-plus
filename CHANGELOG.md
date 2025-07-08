@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-01-07
+
+### Added
+- New `substack-mcp-plus-setup` command for easy authentication setup
+- No more hunting for node_modules directories!
+
+### Changed
+- Updated all documentation to use the new setup command
+- Updated error messages to reference the new setup command
+
+### Developer Experience
+- Significantly improved new user onboarding experience
+- Simple two-command setup process
+
 ## [1.0.1] - 2025-01-07
 
 ### Fixed
