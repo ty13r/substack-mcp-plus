@@ -251,10 +251,11 @@ class PostHandler:
                 logger.info(f"Subdomain: {self.client.client.subdomain}")
             
             # Try to get the raw API response
-            raw_result = self.client.get_drafts(limit=min(limit * 3, 50))
+            # Note: Substack API seems to have a lower limit than expected
+            raw_result = self.client.get_drafts(limit=min(limit, 25))
             logger.info(f"Raw result type: {type(raw_result)}")
             
-            all_posts = list(raw_result)  # Get more to ensure we have enough drafts, but cap at 50
+            all_posts = list(raw_result)
             logger.info(f"Retrieved {len(all_posts)} posts from API")
             
             # If empty, let's try a different approach
@@ -310,7 +311,7 @@ class PostHandler:
             raise ValueError("limit must be between 1 and 25")
         
         # Get all posts and filter for published only
-        all_posts = self.client.get_drafts(limit=min(limit * 2, 50))  # Get more to ensure we have enough, but cap at 50
+        all_posts = self.client.get_drafts(limit=min(limit, 25))
         published = []
         
         for post in all_posts:
