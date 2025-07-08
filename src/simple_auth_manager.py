@@ -1,14 +1,15 @@
 # ABOUTME: SimpleAuthManager class for file-based token storage without keychain
 # ABOUTME: Uses encrypted local file storage to avoid macOS keychain password prompts
 
-import os
+import base64
 import json
 import logging
+import os
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 from cryptography.fernet import Fernet
-import base64
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,15 @@
 # ABOUTME: PostHandler class for managing Substack post operations
 # ABOUTME: Handles creating, updating, publishing, and listing posts with formatting
 
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime
 import logging
-from src.converters.markdown_converter import MarkdownConverter
-from src.converters.html_converter import HTMLConverter
-from src.converters.block_builder import BlockBuilder
-from src.utils.api_wrapper import SubstackAPIError
+from typing import Any, Dict, List, Optional
+
 from substack.post import Post
+
+from src.converters.block_builder import BlockBuilder
+from src.converters.html_converter import HTMLConverter
+from src.converters.markdown_converter import MarkdownConverter
+from src.utils.api_wrapper import SubstackAPIError
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +105,6 @@ class PostHandler:
                     f"Removing duplicate title from content: {first_block_text}"
                 )
                 blocks = blocks[1:]  # Skip the first block
-
-        # Format blocks for API
-        body = self._format_blocks_for_api(blocks)
 
         # Create a Post object as required by python-substack
         # Get user_id from the client
@@ -659,7 +657,7 @@ class PostHandler:
                 if isinstance(e, SubstackAPIError):
                     raise e
                 raise SubstackAPIError(
-                    f"Unable to get subscriber count (both methods failed)"
+                    "Unable to get subscriber count (both methods failed)"
                 )
 
     def _clean_publication_url(self, url: str) -> str:
@@ -698,7 +696,7 @@ class PostHandler:
 
             if not isinstance(draft, dict):
                 logger.error(f"Unexpected draft response type: {type(draft)}")
-                raise ValueError(f"Invalid draft response")
+                raise ValueError("Invalid draft response")
 
             # Extract slug from draft for published posts
             slug = draft.get("slug") or draft.get("draft_slug", "")
@@ -745,7 +743,7 @@ class PostHandler:
             # If we got a preview URL from the API, use it
             if preview_url_from_api:
                 preview_url = preview_url_from_api
-                logger.info(f"Using preview URL from prepublish_draft API")
+                logger.info("Using preview URL from prepublish_draft API")
             elif self.client.publication_url:
                 # Construct preview URL
                 if is_published and slug:
@@ -926,9 +924,9 @@ class PostHandler:
                                     item_content
                                 )
                         # Check various possible fields
-                        elif "text" in item and not "content" in item:
+                        elif "text" in item and "content" not in item:
                             item_text = item["text"]
-                        elif "paragraph" in item and not "content" in item:
+                        elif "paragraph" in item and "content" not in item:
                             # Some items have paragraph field instead of content
                             para = item["paragraph"]
                             if isinstance(para, dict) and "content" in para:
@@ -1017,9 +1015,9 @@ class PostHandler:
                                     item_content
                                 )
                         # Check various possible fields
-                        elif "text" in item and not "content" in item:
+                        elif "text" in item and "content" not in item:
                             item_text = item["text"]
-                        elif "paragraph" in item and not "content" in item:
+                        elif "paragraph" in item and "content" not in item:
                             # Some items have paragraph field instead of content
                             para = item["paragraph"]
                             if isinstance(para, dict) and "content" in para:

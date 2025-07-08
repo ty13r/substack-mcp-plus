@@ -8,12 +8,12 @@ from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 from mcp.server.stdio import stdio_server
+from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 
 from src.handlers.auth_handler import AuthHandler
-from src.handlers.post_handler import PostHandler
 from src.handlers.image_handler import ImageHandler
+from src.handlers.post_handler import PostHandler
 
 # Set up logging - use stderr for MCP servers
 logging.basicConfig(
@@ -578,7 +578,7 @@ class SubstackMCPServer:
                     result = await post_handler.get_post_content(arguments["post_id"])
 
                     content_text = []
-                    content_text.append(f"📄 Post Content")
+                    content_text.append("📄 Post Content")
                     content_text.append("=" * 50)
                     content_text.append(f"Title: {result['title']}")
                     if result["subtitle"]:
@@ -807,7 +807,7 @@ class SubstackMCPServer:
                 logger.error(f"Error executing tool {name}: {e}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
 
-        logger.info(f"Registered 12 tools")
+        logger.info("Registered 12 tools")
 
     async def run(self):
         """Run the MCP server using stdio transport"""

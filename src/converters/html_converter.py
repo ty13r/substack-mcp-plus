@@ -1,8 +1,10 @@
 # ABOUTME: HTMLConverter class for converting HTML to Substack JSON blocks
 # ABOUTME: Uses BeautifulSoup to parse HTML and convert to block format
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from bs4 import BeautifulSoup, NavigableString, Tag
+
 from src.converters.block_builder import BlockBuilder
 
 

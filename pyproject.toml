@@ -61,6 +61,8 @@ include = '\.pyi?$'
 [tool.ruff]
 line-length = 88
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -69,7 +71,7 @@ select = [
     "B",  # flake8-bugbear
     "C4", # flake8-comprehensions
 ]
-ignore = ["E203", "E266", "E501"]
+ignore = ["E203", "E266", "E501", "B904", "E722"]
 
 [tool.mypy]
 python_version = "3.9"

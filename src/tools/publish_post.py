@@ -1,7 +1,7 @@
 # ABOUTME: MCP tool for publishing Substack posts
 # ABOUTME: Publishes draft posts immediately
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class PublishPostTool:

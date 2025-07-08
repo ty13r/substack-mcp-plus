@@ -1,7 +1,7 @@
 # ABOUTME: MCP tool for creating formatted Substack posts
 # ABOUTME: Supports Markdown, HTML, and plain text with rich formatting
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict
 
 
 class CreateFormattedPostTool:

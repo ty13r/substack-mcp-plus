@@ -2,8 +2,7 @@
 # ABOUTME: Provides consistent error handling for all API calls
 
 import logging
-from typing import Any, Dict, List, Optional, Union, Callable
-from functools import wraps
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +53,16 @@ class APIWrapper:
 
             # Parse common error patterns
             if "not found" in response.lower():
-                raise SubstackAPIError(f"Post not found")
+                raise SubstackAPIError("Post not found")
             elif (
                 "unauthorized" in response.lower()
                 or "authentication" in response.lower()
             ):
                 raise SubstackAPIError(
-                    f"Authentication failed - please check your credentials"
+                    "Authentication failed - please check your credentials"
                 )
             elif "rate limit" in response.lower():
-                raise SubstackAPIError(f"Rate limit exceeded - please try again later")
+                raise SubstackAPIError("Rate limit exceeded - please try again later")
             else:
                 # Generic error for any other string response
                 raise SubstackAPIError(f"API error: {response}")
@@ -76,9 +75,9 @@ class APIWrapper:
             # Parse the error message
             if isinstance(error_msg, str):
                 if "not found" in error_msg.lower():
-                    raise SubstackAPIError(f"Post not found")
+                    raise SubstackAPIError("Post not found")
                 elif "unauthorized" in error_msg.lower():
-                    raise SubstackAPIError(f"Authentication failed")
+                    raise SubstackAPIError("Authentication failed")
                 else:
                     raise SubstackAPIError(f"API error: {error_msg}")
             else:
@@ -326,7 +325,7 @@ class APIWrapper:
         try:
             result = self.client.get_image(image_path)
             return self._handle_response(result, "get_image")
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise SubstackAPIError(f"Image file not found: {image_path}")
         except Exception as e:
             logger.error(f"get_image error: {type(e).__name__}: {str(e)}")

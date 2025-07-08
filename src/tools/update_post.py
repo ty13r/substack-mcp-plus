@@ -1,7 +1,7 @@
 # ABOUTME: MCP tool for updating existing Substack posts
 # ABOUTME: Allows updating title, subtitle, and content with formatting
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict
 
 
 class UpdatePostTool:

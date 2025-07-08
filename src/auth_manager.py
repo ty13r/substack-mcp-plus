@@ -1,16 +1,14 @@
 # ABOUTME: AuthManager class for secure token storage and automatic refresh
 # ABOUTME: Handles encryption, keyring storage, and token lifecycle management
 
-import os
+import base64
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 import keyring
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import base64
 
 logger = logging.getLogger(__name__)
 
@@ -196,10 +194,6 @@ class AuthManager:
         try:
             # This is a workaround since keyring doesn't have a list function
             # We'll check common publication patterns
-            import keyring.backends
-
-            backend = keyring.get_keyring()
-
             # Try to get all stored items (implementation-specific)
             # For now, return empty list - users will need to know their publication URL
             return publications

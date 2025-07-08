@@ -1,7 +1,7 @@
 # ABOUTME: MCP tool for listing draft Substack posts
 # ABOUTME: Returns recent drafts with their metadata
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict
 
 
 class ListDraftsTool:

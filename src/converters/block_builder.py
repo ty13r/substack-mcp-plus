@@ -1,7 +1,7 @@
 # ABOUTME: BlockBuilder class for creating Substack JSON block format
 # ABOUTME: Provides methods to create all supported block types with proper structure
 
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class BlockBuilder:

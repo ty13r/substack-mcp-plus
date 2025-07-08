@@ -7,13 +7,13 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from mcp.server import Server, Request
+from mcp.server import Server
 from mcp.server.models import InitializationOptions
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
+from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 
 from .handlers.auth_handler import AuthHandler
-from .handlers.post_handler import PostHandler
 from .handlers.image_handler import ImageHandler
+from .handlers.post_handler import PostHandler
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

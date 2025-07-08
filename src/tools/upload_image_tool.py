@@ -1,7 +1,8 @@
 # ABOUTME: MCP tool class for uploading images to Substack CDN
 # ABOUTME: Supports file paths, URLs, and returns optimized CDN URLs
 
-from typing import Dict, Any, Optional, Literal
+from typing import Any, Dict
+
 from src.handlers.image_handler import ImageHandler
 
 

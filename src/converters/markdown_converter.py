@@ -2,7 +2,8 @@
 # ABOUTME: Uses regex parsing to handle all markdown elements and formatting
 
 import re
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
 from src.converters.block_builder import BlockBuilder
 
 

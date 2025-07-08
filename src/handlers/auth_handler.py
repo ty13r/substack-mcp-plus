@@ -1,15 +1,17 @@
 # ABOUTME: AuthHandler class for managing Substack authentication
 # ABOUTME: Supports automatic token management, refresh, and multiple auth methods
 
-import os
+import asyncio
 import json
 import logging
+import os
 import tempfile
-import asyncio
-from typing import Optional, Dict, Any
-from urllib.parse import urlparse
 from datetime import datetime, timedelta
+from typing import Dict
+from urllib.parse import urlparse
+
 from substack import Api as SubstackApi
+
 from src.simple_auth_manager import SimpleAuthManager
 from src.utils.api_wrapper import APIWrapper
 
