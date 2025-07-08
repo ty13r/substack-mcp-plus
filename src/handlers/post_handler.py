@@ -239,16 +239,36 @@ class PostHandler:
             raise ValueError("limit must be between 1 and 25")
         # python-substack returns a generator, convert to list
         # The API returns all posts, so we need to filter for drafts only
-        all_posts = self.client.get_drafts(limit=min(limit * 3, 50))  # Get more to ensure we have enough drafts, but cap at 50
+        try:
+            all_posts = list(self.client.get_drafts(limit=min(limit * 3, 50)))  # Get more to ensure we have enough drafts, but cap at 50
+            logger.debug(f"Retrieved {len(all_posts)} posts from API")
+        except Exception as e:
+            logger.error(f"Error getting drafts: {e}")
+            return []
+        
         drafts = []
         
         for post in all_posts:
+            # Log the post structure for debugging
+            logger.debug(f"Post keys: {list(post.keys())[:10]}")
+            logger.debug(f"Post type: {post.get('type')}")
+            logger.debug(f"Post has draft_title: {post.get('draft_title') is not None}")
+            logger.debug(f"Post has title: {post.get('title') is not None}")
+            logger.debug(f"Post has post_date: {post.get('post_date') is not None}")
+            
             # Check if it's actually a draft (not published)
-            if post.get('draft_title') and not post.get('post_date'):
+            # Drafts have type='draft' or no post_date
+            is_draft = (
+                post.get('type') == 'draft' or 
+                (not post.get('post_date') and (post.get('draft_title') or post.get('title')))
+            )
+            
+            if is_draft:
                 drafts.append(post)
                 if len(drafts) >= limit:
                     break
         
+        logger.info(f"Returning {len(drafts)} drafts")
         return drafts
     
     async def list_published(self, limit: int = 10) -> List[Dict[str, Any]]:
