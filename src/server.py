@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import sys
 from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
@@ -14,8 +15,14 @@ from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 from src.handlers.image_handler import ImageHandler
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging - use stderr for MCP servers
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
 logger = logging.getLogger(__name__)
 
 

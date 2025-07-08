@@ -137,16 +137,27 @@ class APIWrapper:
     def get_drafts(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get drafts with error handling"""
         try:
+            logger.info(f"APIWrapper.get_drafts called with limit={limit}")
+            logger.info(f"Client type: {type(self.client)}")
+            logger.info(f"Client has get_drafts: {hasattr(self.client, 'get_drafts')}")
+            
             result = self.client.get_drafts(limit=limit)
+            logger.info(f"get_drafts returned type: {type(result)}")
+            
             # Convert generator to list and check each item
             drafts = []
-            for draft in result:
+            for i, draft in enumerate(result):
+                logger.debug(f"Processing draft {i+1}")
                 checked_draft = self._handle_response(draft, "get_drafts[item]")
                 if isinstance(checked_draft, dict):
                     drafts.append(checked_draft)
+            
+            logger.info(f"APIWrapper.get_drafts returning {len(drafts)} drafts")
             return drafts
         except Exception as e:
-            logger.error(f"get_drafts error: {str(e)}")
+            logger.error(f"get_drafts error: {type(e).__name__}: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
     
     def post_draft(self, draft_data: Dict[str, Any]) -> Dict[str, Any]:
