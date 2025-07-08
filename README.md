@@ -7,7 +7,16 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
 [![Tests](https://github.com/ty13r/substack-mcp-plus/actions/workflows/ci.yml/badge.svg)](https://github.com/ty13r/substack-mcp-plus/actions/workflows/ci.yml)
 
-**The most advanced Substack MCP server available.** Create publication-ready posts with full rich text formatting, manage drafts, schedule posts, and more - all from Claude Desktop or any MCP-compatible client.
+**The most advanced Substack MCP server available.** Create publication-ready posts in minutes with full rich text formatting, manage drafts, schedule posts, and more - all from [Claude Desktop](https://claude.ai/download) or any MCP-compatible client.
+
+## 📋 Requirements
+
+- Python 3.9 or higher
+- Substack account credentials:
+    - Email and password (recommended)
+    - OR session token and user ID
+- An LLM client that supports Model Context Protocol (MCP)
+    - This MCP server has been thoroughly tested with Claude Desktop
 
 ## ⚠️ Important Disclaimers
 
@@ -19,6 +28,42 @@
 - Use at your own risk and in accordance with Substack's Terms of Service
 
 **[→ See all known issues and limitations](docs/KNOWN_ISSUES.md)**
+
+## 🚀 Zero-Config Setup
+
+### 1. Install the package
+```bash
+npm install -g substack-mcp-plus
+```
+
+### 2. Authenticate with Substack
+```bash
+substack-mcp-plus-setup
+```
+
+The setup wizard will:
+- Open a browser for secure login
+- Handle CAPTCHA challenges
+- Store encrypted credentials
+- Test your connection
+
+### 3. Configure Claude Desktop
+Add to your Claude Desktop configuration:
+
+```json
+{
+  "mcpServers": {
+    "substack-mcp-plus": {
+      "command": "substack-mcp-plus",
+      "env": {
+        "SUBSTACK_PUBLICATION_URL": "https://yourpublication.substack.com"
+      }
+    }
+  }
+}
+```
+
+That's it! Automatic Python detection, virtual environment setup, and dependency installation.
 
 ## 🌟 Why Choose Substack MCP Plus?
 
@@ -36,18 +81,98 @@
 - **Smart formatting** - Automatic conversion to Substack's native format
 - **Paywall markers** - Easily separate free and premium content
 
-### 🎯 14 Powerful Tools
-Create, update, publish, schedule, duplicate posts and more. The most comprehensive Substack automation toolkit available.
+### ⚡ Lightning-Fast Publishing
+- **30 seconds to draft** - "Create a post about X" → Draft ready in Substack
+- **Instant publishing** - "Publish my latest draft" → Live to subscribers
+- **No context switching** - Write, edit, and publish without leaving Claude Desktop
+- **Bulk operations** - Create multiple posts in minutes, not hours
+- **From idea to published** - What used to take 30-60 minutes now takes 2-3 minutes
 
-### 🚀 Zero-Config Setup
-```bash
-# Install the package
-npm install -g substack-mcp-plus
+### 🎯 12 Powerful Tools
+Create, update, publish, duplicate posts and more. The most comprehensive Substack automation toolkit available.
 
-# Run the setup wizard
-substack-mcp-plus-setup
+## 🛠 Available Tools
+
+All 12 tools at a glance:
+1. **create_formatted_post** - Create rich text drafts
+2. **update_post** - Edit existing drafts  
+3. **publish_post** - Publish immediately
+4. **list_drafts** - View draft posts
+5. **list_published** - View published posts
+6. **get_post_content** - Read full post content
+7. **duplicate_post** - Copy existing posts
+8. **upload_image** - Upload to Substack CDN
+9. **preview_draft** - Generate preview links
+10. **get_sections** - List publication sections
+11. **get_subscriber_count** - View subscriber stats
+12. **delete_draft** - Remove drafts safely
+
+## 💬 Examples of What to Expect
+
+Here's what you can say to Claude Desktop and what each tool will do:
+
+### Creating Content
+**You say:** "Create a new Substack draft about AI and the future of work"  
+**What happens:** Creates a draft post with your content, returns the post ID and URL  
+**Claude shows:** "I've created a draft post titled 'AI and the Future of Work' (ID: 123456)"
+
+**You say:** "Write a post with a paywall after the introduction"  
+**What happens:** Creates a draft with free preview content and premium content separated by `<!--paywall-->`  
+**Claude shows:** "Draft created with paywall marker. Free readers will see the intro, subscribers get full access."
+
+### Managing Posts
+**You say:** "Show me my last 5 drafts"  
+**What happens:** Lists your most recent draft posts with titles, IDs, and dates  
+**Claude shows:** A formatted list like:
 ```
-That's it! Automatic Python detection, virtual environment setup, and dependency installation.
+1. "AI and the Future of Work" (ID: 123456) - Created 2 hours ago
+2. "Weekly Newsletter #42" (ID: 123455) - Created yesterday
+3. "Book Review: Deep Work" (ID: 123454) - Created 3 days ago
+```
+
+**You say:** "Update the subtitle of draft 123456 to 'How automation will reshape careers'"  
+**What happens:** Updates only the subtitle field of the specified draft  
+**Claude shows:** "Updated post subtitle. Note: This replaces the entire subtitle field."
+
+**You say:** "Publish my latest draft"  
+**What happens:** Publishes the draft immediately to your subscribers  
+**Claude shows:** "Post published! It's now live at: https://yourpub.substack.com/p/ai-and-future-work"
+
+### Working with Content
+**You say:** "Show me what's in my published post about remote work"  
+**What happens:** Retrieves and displays the full formatted content of the post  
+**Claude shows:** The complete post content in readable markdown format
+
+**You say:** "Make a copy of my most popular post to use as a template"  
+**What happens:** Creates a new draft with identical content but titled "Copy of [original]"  
+**Claude shows:** "Created draft 'Copy of Your Popular Post' (ID: 123457)"
+
+**You say:** "Upload the chart image from my desktop"  
+**What happens:** Uploads the image to Substack's CDN and returns the URL  
+**Claude shows:** "Image uploaded successfully: https://substackcdn.com/image/..."
+
+### Analytics & Management
+**You say:** "How many subscribers do I have?"  
+**What happens:** Retrieves your current subscriber count  
+**Claude shows:** "You have 1,234 subscribers on https://yourpub.substack.com"
+
+**You say:** "What sections does my publication have?"  
+**What happens:** Lists all your publication's sections/categories  
+**Claude shows:** "Your publication has these sections: Newsletter, Essays, Book Reviews, Podcast"
+
+**You say:** "Generate a preview link for draft 123456"  
+**What happens:** Creates an author-only preview URL for sharing  
+**Claude shows:** "Preview link: https://yourpub.substack.com/p/ai-and-future-work?preview=true"
+
+**You say:** "Delete that test draft I created earlier"  
+**What happens:** Asks for confirmation, then permanently deletes the draft  
+**Claude shows:** "Are you sure you want to delete 'Test Post'? Please confirm."
+
+### Important Notes
+- All formatting (bold, italic, lists, code blocks) is preserved when creating posts
+- The tool handles authentication automatically - no manual token management needed
+- Draft posts are saved instantly and can be edited in Substack's web editor too
+- Published posts go live immediately to all your subscribers
 
 ## 💭 Why We Built This
 
@@ -96,192 +221,35 @@ For detailed guides and documentation, see the [docs directory](docs/):
 - **[Testing Guide](docs/testing_guide.md)** - Comprehensive testing instructions
 - **[All Documentation](docs/)** - Complete documentation index
 
-## 🛠 Available Tools
+## 📝 Known Limitations
 
-All 14 tools at a glance:
-1. **create_formatted_post** - Create rich text drafts
-2. **update_post** - Edit existing drafts
-3. **publish_post** - Publish immediately
-4. **schedule_post** - Schedule for future
-5. **list_drafts** - View draft posts
-6. **list_published** - View published posts
-7. **get_post_content** - Read full post content
-8. **duplicate_post** - Copy existing posts
-9. **upload_image** - Upload to Substack CDN
-10. **preview_draft** - Generate preview links
-11. **get_sections** - List publication sections
-12. **get_subscriber_count** - View subscriber stats
-13. **delete_draft** - Remove drafts safely
-14. **list_drafts_for_deletion** - Bulk draft management
+**[→ See detailed documentation in KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)**
 
-### Core Tools
+### Formatting & Display
+- **Text formatting** shows as markdown syntax (`**bold**`, `*italic*`) instead of formatted text
+- **Links** display as `[text](url)` instead of clickable links  
+- **Images** may show as `![alt](url)` instead of rendered images
+- **Blockquotes** display with `>` prefix instead of styled blocks
 
-<details>
-<summary><strong>create_formatted_post</strong> - Create a draft post with rich formatting</summary>
+### API & Feature Limitations
+- **No rate limiting** - be mindful of Substack's undocumented API limits
+- **Subscriber count** may show 0 even with active subscribers (API limitation)
+- **Post scheduling removed** in v1.0.3 due to outdated API endpoint (404 errors)
+- **Preview links** are author-only (shareable links require UUID access not available)
 
-**Inputs**:
-- `title` (string, required): Title of the post
-- `content` (string, required): Content of the post (Markdown, HTML, or plain text)
-- `subtitle` (string, optional): Subtitle of the post
-- `content_type` (string, optional): Format of content - "markdown" (default), "html", or "plain"
+### Unsupported Features
+- No collaborative posts, threads, or podcast episodes
+- No analytics beyond subscriber count (views, opens, engagement)
+- No custom CSS, JavaScript, or embedded content (tweets, videos)
+- Maximum post size limits are undocumented
 
-**Returns**: Post details including ID, title, subtitle, and URL
+### Technical Constraints
+- Uses **unofficial reverse-engineered API** that may change without notice
+- **python-substack library** hasn't been updated in 2+ years
+- Session tokens expire and require re-authentication
+- Some accounts with advanced security may have issues
 
-**Example**:
-```markdown
-# My Amazing Post
-
-This post has **bold** text, *italics*, and even code:
-
-```python
-def hello():
-    print("Hello, Substack!")
-```
-
-- Bullet points
-- With multiple items
-
-> And blockquotes too!
-```
-</details>
-
-<details>
-<summary><strong>update_post</strong> - Update an existing draft</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the post to update
-- `title` (string, optional): New title
-- `content` (string, optional): New content
-- `subtitle` (string, optional): New subtitle
-- `content_type` (string, optional): Format of content if provided
-
-**Returns**: Updated post details
-</details>
-
-<details>
-<summary><strong>publish_post</strong> - Publish a draft immediately</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the draft to publish
-
-**Returns**: Published post details
-</details>
-
-<details>
-<summary><strong>schedule_post</strong> - Schedule a draft for future publication</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the draft to schedule
-- `scheduled_at` (string, required): ISO 8601 datetime when to publish (e.g., '2024-01-15T10:00:00Z')
-
-**Returns**: Scheduled post details
-</details>
-
-### Content Management
-
-<details>
-<summary><strong>list_drafts</strong> - List recent draft posts</summary>
-
-**Inputs**:
-- `limit` (integer, optional): Maximum number of drafts to return (1-25, default: 10)
-
-**Returns**: List of drafts with metadata
-</details>
-
-<details>
-<summary><strong>list_published</strong> - List recently published posts</summary>
-
-**Inputs**:
-- `limit` (integer, optional): Maximum number of posts to return (1-25, default: 10)
-
-**Returns**: List of published posts with titles, IDs, and publication dates
-</details>
-
-<details>
-<summary><strong>get_post_content</strong> - Read the full content of any post</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the post to read
-
-**Returns**: Complete post content in readable markdown format
-</details>
-
-<details>
-<summary><strong>duplicate_post</strong> - Create a copy of an existing post</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the post to duplicate
-- `new_title` (string, optional): Title for the copy (defaults to "Copy of [original]")
-
-**Returns**: New draft post with duplicated content
-</details>
-
-### Media & Resources
-
-<details>
-<summary><strong>upload_image</strong> - Upload an image to Substack's CDN</summary>
-
-**Inputs**:
-- `image_path` (string, required): Full path to the image file
-
-**Returns**: URL for the uploaded image
-</details>
-
-<details>
-<summary><strong>preview_draft</strong> - Generate a shareable preview link</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the draft to preview
-
-**Returns**: Preview link that can be shared for feedback
-</details>
-
-### Publication Management
-
-<details>
-<summary><strong>get_sections</strong> - List available sections/categories</summary>
-
-**Inputs**: None
-
-**Returns**: List of sections with IDs and names
-</details>
-
-<details>
-<summary><strong>get_subscriber_count</strong> - Get total subscriber count</summary>
-
-**Inputs**: None
-
-**Returns**: Total number of subscribers and publication URL
-</details>
-
-### Housekeeping
-
-<details>
-<summary><strong>delete_draft</strong> - Safely delete a draft post</summary>
-
-**Inputs**:
-- `post_id` (string, required): ID of the draft to delete
-- `confirm_delete` (boolean, required): Must be true to confirm deletion
-
-**Returns**: Confirmation of deletion
-</details>
-
-<details>
-<summary><strong>list_drafts_for_deletion</strong> - List drafts with detailed info for bulk management</summary>
-
-**Inputs**:
-- `limit` (integer, optional): Maximum number of drafts to return (1-25, default: 25)
-
-**Returns**: Detailed list of drafts with IDs, titles, and last updated dates
-</details>
-
-## 📋 Requirements
-
-- Python 3.9 or higher
-- Substack account credentials:
-    - Email and password (recommended)
-    - OR session token and user ID
-- An LLM client that supports Model Context Protocol (MCP)
+**Workaround**: Create drafts with this tool, then use Substack's web editor for final formatting touches before publishing.
 
 ## 🔒 Security Best Practices
 
@@ -318,49 +286,6 @@ Found a security vulnerability? Please **DO NOT** create a public issue. Instead
 3. Allow time for a fix before public disclosure
 
 For more security information, see our [Security Policy](SECURITY.md).
-
-## 🔧 Installation
-
-### 1. Install the package
-```bash
-npm install -g substack-mcp-plus
-```
-
-This automatically:
-- ✅ Detects Python 3.10+ on your system
-- ✅ Creates a Python virtual environment
-- ✅ Installs all dependencies
-- ✅ Sets up the `substack-mcp-plus` command
-
-### 2. Authenticate with Substack
-```bash
-cd $(npm root -g)/substack-mcp-plus
-python setup_auth.py
-```
-
-The interactive wizard will:
-- Open a browser for secure login
-- Handle CAPTCHA challenges
-- Store encrypted credentials
-- Test your connection
-
-### 3. Configure Claude Desktop
-Add to your Claude Desktop configuration:
-
-```json
-{
-  "mcpServers": {
-    "substack-mcp-plus": {
-      "command": "substack-mcp-plus",
-      "env": {
-        "SUBSTACK_PUBLICATION_URL": "https://yourpublication.substack.com"
-      }
-    }
-  }
-}
-```
-
-**That's it!** No API keys, no token management, just seamless integration.
 
 ## 🎨 Formatting Examples
 
@@ -475,17 +400,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [python-substack](https://github.com/ma2za/python-substack) - unofficial Python library for Substack (not affiliated with Substack Inc.)
 - [Model Context Protocol](https://modelcontextprotocol.io) specification by Anthropic
 - The Substack team for creating an amazing platform (though we have no affiliation)
-
-## 📝 Known Limitations
-
-- **Text formatting** (bold/italic) displays as markdown syntax (`**bold**`, `*italic*`) rather than formatted text
-- **Links** display as markdown syntax (`[text](url)`) rather than clickable links
-- **Blockquotes** display with `>` prefix rather than styled blocks
-- Rate limiting is not implemented (be mindful of Substack's API limits)
-- No support for collaborative posts
-- No analytics data access
-
-**Note**: We use a safe approach that prioritizes reliable content display over advanced formatting. All content will always display correctly, though some formatting may appear as plain text with markdown syntax.
 
 ## 🆘 Support
 

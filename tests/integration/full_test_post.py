@@ -16,13 +16,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.handlers.auth_handler import AuthHandler
 from src.handlers.post_handler import PostHandler
 
+
 async def create_comprehensive_test_post():
     """Create a comprehensive test post with all formatting types"""
-    
+
     # Authenticate
     auth_handler = AuthHandler()
     client = await auth_handler.authenticate()
-    
+
     # Create comprehensive test content
     content = """# Comprehensive Markdown Test Post
 
@@ -165,44 +166,48 @@ This comprehensive test post demonstrates all the markdown formatting capabiliti
 
     # Create the post handler
     post_handler = PostHandler(client)
-    
+
     print("Creating comprehensive test post...")
-    
+
     try:
         # Create the draft
         result = await post_handler.create_draft(
             title="🧪 Comprehensive Markdown Test - All Formatting Types",
             content=content,
             subtitle="Testing every markdown feature supported by Substack MCP Plus",
-            content_type="markdown"
+            content_type="markdown",
         )
-        
-        draft_id = result.get('id')
+
+        draft_id = result.get("id")
         print(f"✅ Draft created successfully!")
         print(f"📝 Draft ID: {draft_id}")
         print(f"📋 Title: {result.get('draft_title', 'Unknown')}")
-        
+
         # Publish the draft immediately
         print(f"\n🚀 Publishing draft {draft_id}...")
-        
+
         publish_result = await post_handler.publish_draft(draft_id)
-        
+
         print(f"✅ Post published successfully!")
         print(f"🌐 Post ID: {publish_result.get('id')}")
         print(f"📅 Published at: {publish_result.get('post_date')}")
         print(f"📧 Email sent at: {publish_result.get('email_sent_at')}")
-        
+
         # Get the slug for the URL
-        slug = publish_result.get('slug')
+        slug = publish_result.get("slug")
         if slug:
             print(f"🔗 Post URL: https://neroaugustus.substack.com/p/{slug}")
-        
-        print(f"\n🎉 Check your Substack publication to see all the formatting in action!")
-        
+
+        print(
+            f"\n🎉 Check your Substack publication to see all the formatting in action!"
+        )
+
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(create_comprehensive_test_post())
