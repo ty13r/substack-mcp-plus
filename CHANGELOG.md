@@ -5,7 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.2] - 2025-01-07
+## [1.0.3] - 2025-07-08
+
+### Fixed
+- **delete_draft**: Now properly requires confirmation before deletion (critical safety fix)
+- **upload_image**: Implemented missing get_image method - uploads now work correctly
+- **get_subscriber_count**: Fixed output formatting loop - no more repeated headers
+- **update_post**: Fixed content updates that were failing with 500 errors
+- **preview_draft**: Fixed URL generation - now creates correct author-only preview URLs
+- **preview_draft**: Fixed /api/v1 being included in URLs
+- **Duplicate title removal**: Posts no longer show title twice in content
+
+### Changed
+- **update_post**: Tool description now clearly warns that it REPLACES entire fields, not partial edits
+- **upload_image**: Tool description clarifies it requires local file paths (no chat/clipboard support yet)
+- **Tool count**: Reduced from 13 to 12 tools (removed redundant list_drafts_for_deletion)
+
+### Removed
+- **schedule_post**: Tool completely removed due to outdated API endpoint in python-substack library
+- **list_drafts_for_deletion**: Removed redundant tool that duplicated list_drafts functionality
+
+### Documentation
+- Added comprehensive KNOWN_ISSUES.md with 10 documented limitations
+- Updated TODO.md with user experience enhancement tasks
+- Added shareable preview links limitation to known issues
+- Documented that python-substack library hasn't been updated in 2+ years
+
+### Known Issues
+- Image rendering shows markdown syntax instead of rendered images
+- Subscriber count may show 0 even with subscribers (API limitation)  
+- Preview links are author-only (shareable links require UUID access not available in API)
+- Bold/italic text still shows as markdown syntax
+
+## [1.0.2] - 2025-07-07
 
 ### Added
 - New `substack-mcp-plus-setup` command for easy authentication setup
@@ -19,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Significantly improved new user onboarding experience
 - Simple two-command setup process
 
-## [1.0.1] - 2025-01-07
+## [1.0.1] - 2025-07-07
 
 ### Fixed
 - Updated Claude Desktop configuration examples to include required SUBSTACK_PUBLICATION_URL
@@ -30,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added example claude-desktop-config.json file
 - Improved clarity on replacing YOUR-PUBLICATION placeholder
 
-## [1.0.0] - 2025-01-07
+## [1.0.0] - 2025-07-07
 
 **Complete rewrite from scratch** - This is not an update but an entirely new implementation:
 - Transformed from JavaScript-only to Python/JavaScript hybrid architecture

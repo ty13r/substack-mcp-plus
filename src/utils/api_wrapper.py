@@ -197,22 +197,6 @@ class APIWrapper:
         except Exception as e:
             raise SubstackAPIError(f"Failed to delete draft: {str(e)}")
     
-    def schedule_draft(self, post_id: str, scheduled_at) -> Dict[str, Any]:
-        """Schedule a draft with error handling"""
-        try:
-            result = self.client.schedule_draft(post_id, scheduled_at)
-            return self._handle_response(result, "schedule_draft")
-        except Exception as e:
-            raise SubstackAPIError(f"Failed to schedule draft: {str(e)}")
-    
-    def unschedule_draft(self, post_id: str) -> Dict[str, Any]:
-        """Unschedule a draft with error handling"""
-        try:
-            result = self.client.unschedule_draft(post_id)
-            return self._handle_response(result, "unschedule_draft")
-        except Exception as e:
-            raise SubstackAPIError(f"Failed to unschedule draft: {str(e)}")
-    
     def prepublish_draft(self, post_id: str) -> Dict[str, Any]:
         """Prepublish a draft with error handling"""
         try:
@@ -264,7 +248,17 @@ class APIWrapper:
                     # Sum up subscriber counts from sections
                     total = 0
                     for section in sections:
-                        total += section.get('subscriber_count', 0)
+                        # Check multiple possible field names
+                        count = section.get('subscriber_count', 0)
+                        if count == 0:
+                            # Try alternative field names
+                            count = section.get('free_subscriber_count', 0) + section.get('paid_subscriber_count', 0)
+                        total += count
+                        
+                        # Log what fields we found
+                        logger.debug(f"Section {section.get('name', 'unknown')}: subscriber_count={section.get('subscriber_count')}, "
+                                   f"free={section.get('free_subscriber_count')}, paid={section.get('paid_subscriber_count')}")
+                    
                     if total > 0:
                         logger.info(f"Got subscriber count from sections: {total}")
                         return total
@@ -284,3 +278,24 @@ class APIWrapper:
             # Any other unexpected error
             logger.error(f"Unexpected error getting subscriber count: {type(e).__name__}: {str(e)}")
             raise SubstackAPIError(f"Failed to get subscriber count: {str(e)}")
+    
+    def get_image(self, image_path: str) -> Dict[str, Any]:
+        """Upload an image to Substack CDN with error handling
+        
+        Args:
+            image_path: Path to the image file or URL
+            
+        Returns:
+            Dict with image metadata including URL
+            
+        Raises:
+            SubstackAPIError: If upload fails
+        """
+        try:
+            result = self.client.get_image(image_path)
+            return self._handle_response(result, "get_image")
+        except FileNotFoundError as e:
+            raise SubstackAPIError(f"Image file not found: {image_path}")
+        except Exception as e:
+            logger.error(f"get_image error: {type(e).__name__}: {str(e)}")
+            raise SubstackAPIError(f"Failed to upload image: {str(e)}")

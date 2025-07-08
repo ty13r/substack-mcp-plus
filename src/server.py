@@ -53,7 +53,7 @@ class SubstackMCPServer:
             return [
                 Tool(
                     name="create_formatted_post",
-                    description="Create a new formatted draft post on Substack. Supports full markdown formatting. IMPORTANT: Always ask for user confirmation before creating new drafts. When user confirms with 'yes' or similar, call this tool again with confirm_create: true. The post will be saved as a draft.",
+                    description="Create a new formatted draft post on Substack. Supports full markdown formatting. IMPORTANT: You MUST ALWAYS ask the user to confirm creation in a follow-up message BEFORE calling this tool with confirm_create=true. Never set confirm_create=true on the first request, even if the user explicitly asks to create. This ensures users have time to review the content before creating.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -71,7 +71,8 @@ class SubstackMCPServer:
                             },
                             "confirm_create": {
                                 "type": "boolean",
-                                "description": "Must be set to true to confirm creating the draft. If not provided or false, a warning will be shown."
+                                "description": "NEVER set to true without explicit user confirmation in a follow-up message. Always false on first call.",
+                                "default": False
                             }
                         },
                         "required": ["title", "content"]
@@ -79,7 +80,7 @@ class SubstackMCPServer:
                 ),
                 Tool(
                     name="update_post",
-                    description="Update an existing Substack draft post. Can modify title, content, subtitle, or any combination. IMPORTANT: Always ask for user confirmation before updating. When user confirms with 'yes' or similar, call this tool again with confirm_update: true. Use list_drafts first to get the post_id.",
+                    description="Update an existing Substack draft post. WARNING: This tool COMPLETELY REPLACES the specified fields - it does NOT make partial edits. If you provide content, it will REPLACE ALL existing content. To make small edits, first use get_post_content to read the current content, make your changes, then provide the ENTIRE updated content. IMPORTANT: You MUST ALWAYS ask the user to confirm updates in a follow-up message BEFORE calling this tool with confirm_update=true. Never set confirm_update=true on the first request.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -89,19 +90,20 @@ class SubstackMCPServer:
                             },
                             "title": {
                                 "type": "string",
-                                "description": "New title for the post (optional). If provided, replaces the current title."
+                                "description": "New title for the post (optional). WARNING: COMPLETELY REPLACES the current title."
                             },
                             "content": {
                                 "type": "string",
-                                "description": "New content in markdown format (optional). If provided, replaces the entire current content."
+                                "description": "New content in markdown format (optional). WARNING: COMPLETELY REPLACES ALL existing content. This is NOT for partial edits - provide the ENTIRE new content."
                             },
                             "subtitle": {
                                 "type": "string",
-                                "description": "New subtitle for the post (optional). If provided, replaces the current subtitle."
+                                "description": "New subtitle for the post (optional). WARNING: COMPLETELY REPLACES the current subtitle."
                             },
                             "confirm_update": {
                                 "type": "boolean",
-                                "description": "Must be set to true to confirm the update. If not provided or false, a warning will be shown."
+                                "description": "NEVER set to true without explicit user confirmation in a follow-up message. Always false on first call.",
+                                "default": False
                             }
                         },
                         "required": ["post_id"]
@@ -109,7 +111,7 @@ class SubstackMCPServer:
                 ),
                 Tool(
                     name="publish_post",
-                    description="Publish a draft post immediately to your Substack publication. This makes the post publicly visible to subscribers and sends it via email if enabled. IMPORTANT: Always ask for user confirmation before publishing. When user confirms with 'yes' or similar, call this tool again with confirm_publish: true. This action cannot be easily undone.",
+                    description="Publish a draft post immediately to your Substack publication. This makes the post publicly visible to subscribers and sends it via email if enabled. IMPORTANT: You MUST ALWAYS ask the user to confirm publishing in a follow-up message BEFORE calling this tool with confirm_publish=true. Never set confirm_publish=true on the first request, even if the user explicitly asks to publish. This action cannot be easily undone.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -119,7 +121,8 @@ class SubstackMCPServer:
                             },
                             "confirm_publish": {
                                 "type": "boolean",
-                                "description": "Must be set to true to confirm publishing. If not provided or false, a warning will be shown."
+                                "description": "NEVER set to true without explicit user confirmation in a follow-up message. Always false on first call.",
+                                "default": False
                             }
                         },
                         "required": ["post_id"]
@@ -141,13 +144,13 @@ class SubstackMCPServer:
                 ),
                 Tool(
                     name="upload_image",
-                    description="Upload an image file to Substack's CDN and get a URL that can be used in posts. Supports common image formats (JPG, PNG, GIF, WebP). The returned URL can be used in markdown content as ![alt text](url).",
+                    description="Upload an image file from your local computer to Substack's CDN and get a URL that can be used in posts. LIMITATION: Currently only supports uploading files from your local filesystem using a file path - cannot upload images directly from chat or clipboard. Supports common image formats (JPG, PNG, GIF, WebP). The returned URL can be used in markdown content as ![alt text](url).",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "image_path": {
                                 "type": "string",
-                                "description": "Full file path to the image file to upload. Must be a valid image file on the local filesystem."
+                                "description": "Full file path to the image file to upload. Must be a valid image file already saved on your local computer (e.g., /Users/you/Pictures/image.jpg). Cannot accept image data directly from chat."
                             }
                         },
                         "required": ["image_path"]
@@ -155,7 +158,7 @@ class SubstackMCPServer:
                 ),
                 Tool(
                     name="delete_draft",
-                    description="Safely delete a specific draft post with required confirmation. This permanently removes the draft from Substack and cannot be undone. Always shows a warning first if confirmation is missing.",
+                    description="Delete a draft post. IMPORTANT: You MUST ALWAYS ask the user to confirm deletion in a follow-up message BEFORE calling this tool with confirm_delete=true. Never set confirm_delete=true on the first request, even if the user explicitly asks to delete. This ensures users have time to reconsider this permanent action.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -165,24 +168,11 @@ class SubstackMCPServer:
                             },
                             "confirm_delete": {
                                 "type": "boolean",
-                                "description": "Must be explicitly set to true to confirm deletion. This safety mechanism prevents accidental deletions."
+                                "description": "NEVER set to true without explicit user confirmation in a follow-up message. Always false on first call.",
+                                "default": False
                             }
                         },
-                        "required": ["post_id", "confirm_delete"]
-                    }
-                ),
-                Tool(
-                    name="list_drafts_for_deletion",
-                    description="Get detailed information about all drafts including titles, IDs, and last updated dates. Designed for reviewing drafts before deletion. Provides examples of how to safely delete each draft.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "limit": {
-                                "type": "integer",
-                                "description": "Maximum number of drafts to return with full details. Default is 25, maximum is 25.",
-                                "default": 25
-                            }
-                        }
+                        "required": ["post_id"]
                     }
                 ),
                 Tool(
@@ -215,7 +205,7 @@ class SubstackMCPServer:
                 ),
                 Tool(
                     name="duplicate_post",
-                    description="Create a copy of an existing post as a new draft. Perfect for using posts as templates. IMPORTANT: Always ask for user confirmation before duplicating. When user confirms with 'yes' or similar, call this tool again with confirm_duplicate: true.",
+                    description="Create a copy of an existing post as a new draft. Perfect for using posts as templates. IMPORTANT: You MUST ALWAYS ask the user to confirm duplication in a follow-up message BEFORE calling this tool with confirm_duplicate=true. Never set confirm_duplicate=true on the first request, even if the user explicitly asks to duplicate.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -229,32 +219,11 @@ class SubstackMCPServer:
                             },
                             "confirm_duplicate": {
                                 "type": "boolean",
-                                "description": "Must be set to true to confirm duplication. If not provided or false, a warning will be shown."
+                                "description": "NEVER set to true without explicit user confirmation in a follow-up message. Always false on first call.",
+                                "default": False
                             }
                         },
                         "required": ["post_id"]
-                    }
-                ),
-                Tool(
-                    name="schedule_post",
-                    description="Schedule a draft to be published at a specific date and time. The post will be automatically published at the scheduled time. IMPORTANT: Always ask for user confirmation before scheduling. When user confirms with 'yes' or similar, call this tool again with confirm_schedule: true. Time should be in ISO 8601 format (e.g., '2024-01-15T10:00:00Z').",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "post_id": {
-                                "type": "string",
-                                "description": "The ID of the draft to schedule."
-                            },
-                            "scheduled_at": {
-                                "type": "string",
-                                "description": "ISO 8601 datetime when to publish (e.g., '2024-01-15T10:00:00Z'). Must be in the future."
-                            },
-                            "confirm_schedule": {
-                                "type": "boolean",
-                                "description": "Must be set to true to confirm scheduling. If not provided or false, a warning will be shown."
-                            }
-                        },
-                        "required": ["post_id", "scheduled_at"]
                     }
                 ),
                 Tool(
@@ -481,21 +450,31 @@ class SubstackMCPServer:
                     confirm = arguments.get("confirm_delete", False)
                     
                     if not confirm:
+                        # First call - get draft details and show warning
+                        try:
+                            draft = client.get_draft(post_id)
+                            if isinstance(draft, dict):
+                                title = draft.get('draft_title') or draft.get('title') or 'Untitled'
+                            else:
+                                title = 'Unknown Title'
+                        except:
+                            title = 'Unknown Title'
+                        
                         return [TextContent(
                             type="text",
-                            text=f"⚠️ DELETION REQUIRES CONFIRMATION ⚠️\n\n"
-                                 f"You are about to delete draft ID: {post_id}\n"
+                            text=f"⚠️ DELETION CONFIRMATION REQUIRED ⚠️\n\n"
+                                 f"You are about to permanently delete:\n"
+                                 f"📄 Title: \"{title}\"\n"
+                                 f"🆔 ID: {post_id}\n\n"
                                  f"This action CANNOT be undone.\n\n"
-                                 f"To proceed, call this tool again with:\n"
-                                 f"- post_id: {post_id}\n"
-                                 f"- confirm_delete: true"
+                                 f"Please confirm: Do you really want to delete this draft?\n"
+                                 f"Reply with 'yes' to proceed with deletion."
                         )]
                     
-                    # Get draft details before deletion
+                    # Confirmation received - proceed with deletion
                     try:
                         draft = client.get_draft(post_id)
                         
-                        # Check if API returned a string error
                         if isinstance(draft, str):
                             raise ValueError(f"API error: {draft}")
                         if not isinstance(draft, dict):
@@ -516,45 +495,8 @@ class SubstackMCPServer:
                     except Exception as e:
                         return [TextContent(
                             type="text",
-                            text=f"❌ Failed to delete draft {post_id}: {str(e)}"
+                            text=f"❌ Failed to delete draft: {str(e)}"
                         )]
-                    
-                elif name == "list_drafts_for_deletion":
-                    post_handler = PostHandler(client)
-                    drafts = await post_handler.list_drafts(
-                        limit=arguments.get("limit", 50)
-                    )
-                    
-                    if not drafts:
-                        return [TextContent(
-                            type="text",
-                            text="No drafts found."
-                        )]
-                    
-                    draft_details = []
-                    draft_details.append(f"📝 Found {len(drafts)} drafts:")
-                    draft_details.append("=" * 50)
-                    
-                    for i, draft in enumerate(drafts, 1):
-                        title = draft.get('draft_title') or draft.get('title') or 'Untitled'
-                        draft_id = draft.get('id')
-                        updated = draft.get('draft_updated_at', 'Unknown')
-                        
-                        draft_details.append(f"{i}. {title}")
-                        draft_details.append(f"   ID: {draft_id}")
-                        draft_details.append(f"   Updated: {updated}")
-                        draft_details.append("")
-                    
-                    draft_details.append("⚠️ To delete a specific draft:")
-                    draft_details.append("Use delete_draft with post_id and confirm_delete: true")
-                    draft_details.append("")
-                    draft_details.append("💡 Example:")
-                    draft_details.append(f"delete_draft(post_id=\"{drafts[0].get('id')}\", confirm_delete=true)")
-                    
-                    return [TextContent(
-                        type="text",
-                        text="\n".join(draft_details)
-                    )]
                     
                 elif name == "list_published":
                     post_handler = PostHandler(client)
@@ -648,63 +590,6 @@ class SubstackMCPServer:
                              f"Title: {result.get('draft_title', 'Untitled')}"
                     )]
                     
-                elif name == "schedule_post":
-                    from datetime import datetime
-                    confirm = arguments.get("confirm_schedule", False)
-                    
-                    if not confirm:
-                        # Get the draft details to show what will be scheduled
-                        try:
-                            draft = client.get_draft(arguments["post_id"])
-                            
-                            # Check if API returned a string error
-                            if isinstance(draft, str):
-                                raise ValueError(f"API error: {draft}")
-                            if not isinstance(draft, dict):
-                                raise ValueError("Invalid API response")
-                                
-                            title = draft.get('draft_title') or draft.get('title') or 'Untitled'
-                            
-                            # Parse and format the datetime for display
-                            scheduled_at = datetime.fromisoformat(arguments["scheduled_at"].replace('Z', '+00:00'))
-                            formatted_time = scheduled_at.strftime("%B %d, %Y at %I:%M %p %Z")
-                            
-                            return [TextContent(
-                                type="text",
-                                text=f"⚠️ CONFIRMATION REQUIRED ⚠️\n\n"
-                                     f"You are about to SCHEDULE this draft:\n"
-                                     f"- Post: \"{title}\"\n"
-                                     f"- Publish time: {formatted_time}\n\n"
-                                     f"⚡ The post will automatically publish at this time.\n\n"
-                                     f"Are you sure you want to schedule this post?\n\n"
-                                     f"To confirm, simply say \"yes\" or tell me to proceed.\n"
-                                     f"To cancel, say \"no\" or tell me to stop."
-                            )]
-                        except Exception as e:
-                            return [TextContent(
-                                type="text",
-                                text=f"⚠️ Error getting draft details: {str(e)}\n\n"
-                                     f"Cannot proceed with scheduling without confirmation."
-                            )]
-                    
-                    # Proceed with scheduling
-                    post_handler = PostHandler(client)
-                    
-                    # Parse the datetime string
-                    scheduled_at = datetime.fromisoformat(arguments["scheduled_at"].replace('Z', '+00:00'))
-                    
-                    result = await post_handler.schedule_post(
-                        post_id=arguments["post_id"],
-                        scheduled_at=scheduled_at
-                    )
-                    
-                    return [TextContent(
-                        type="text",
-                        text=f"📅 Post scheduled successfully!\n\n"
-                             f"Post ID: {arguments['post_id']}\n"
-                             f"Scheduled for: {arguments['scheduled_at']}"
-                    )]
-                    
                 elif name == "get_sections":
                     post_handler = PostHandler(client)
                     sections = await post_handler.get_sections()
@@ -741,7 +626,7 @@ class SubstackMCPServer:
                         return [TextContent(
                             type="text",
                             text=f"📊 Subscriber Statistics\n"
-                                 f"=" * 50 + "\n"
+                                 f"{'=' * 50}\n"
                                  f"Total Subscribers: {result['total_subscribers']:,}\n"
                                  f"Publication: {result['publication_url']}"
                         )]
@@ -783,12 +668,38 @@ class SubstackMCPServer:
                         if result.get('title'):
                             preview_text.append(f"Title: {result['title']}")
                         
+                        # Show if it's published
+                        if result.get('is_published'):
+                            preview_text.append("Status: Published")
+                        else:
+                            preview_text.append("Status: Draft")
+                        
                         # Show the preview URL prominently
                         if result.get('preview_url'):
                             preview_text.append("")
-                            preview_text.append(f"Preview URL: {result['preview_url']}")
+                            
+                            # Show the URL on its own line for easy copying
+                            if "/publish/post/" in result['preview_url'] and not result.get('is_published'):
+                                preview_text.append("📋 AUTHOR-ONLY PREVIEW URL:")
+                            elif result.get('is_published'):
+                                preview_text.append("📋 PUBLISHED POST URL:")
+                            else:
+                                preview_text.append("📋 PREVIEW URL:")
+                            
                             preview_text.append("")
-                            preview_text.append("Share this link for feedback before publishing!")
+                            preview_text.append(result['preview_url'])
+                            preview_text.append("")
+                            
+                            # Add appropriate instructions
+                            if "/publish/post/" in result['preview_url'] and not result.get('is_published'):
+                                preview_text.append("⚠️ This is an author-only preview link")
+                                preview_text.append("⚠️ You must be logged in as the author to view it")
+                                preview_text.append("⚠️ This link CANNOT be shared for feedback")
+                                preview_text.append("")
+                                preview_text.append("ℹ️ Shareable preview links are not currently supported")
+                            elif result.get('is_published'):
+                                preview_text.append("ℹ️ This post is already published")
+                                preview_text.append("ℹ️ Anyone with this link can read it")
                         else:
                             preview_text.append("")
                             preview_text.append(result.get('message', 'Preview generated but URL not available'))
@@ -822,7 +733,7 @@ class SubstackMCPServer:
                     text=f"Error: {str(e)}"
                 )]
         
-        logger.info(f"Registered 14 tools")
+        logger.info(f"Registered 12 tools")
     
     async def run(self):
         """Run the MCP server using stdio transport"""
@@ -834,7 +745,7 @@ class SubstackMCPServer:
                 write_stream,
                 InitializationOptions(
                     server_name="substack-mcp-plus",
-                    server_version="1.0.0",
+                    server_version="1.0.3",
                     capabilities={}
                 )
             )

@@ -79,6 +79,15 @@ class PostHandler:
         # Handle paywall markers in content
         blocks = self._process_paywall_markers(content, blocks, content_type)
         
+        # Remove duplicate title if the first block is a heading matching the post title
+        if blocks and blocks[0].get('type') in ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six']:
+            # Extract text from the first block's content
+            first_block_text = self._extract_text_from_content(blocks[0].get('content', []))
+            # Compare case-insensitively
+            if first_block_text.strip().lower() == title.strip().lower():
+                logger.info(f"Removing duplicate title from content: {first_block_text}")
+                blocks = blocks[1:]  # Skip the first block
+        
         # Format blocks for API
         body = self._format_blocks_for_api(blocks)
         
@@ -176,29 +185,50 @@ class PostHandler:
                 update_data["subtitle"] = subtitle
         
         if content is not None:
+            # For content updates, we need to use the same format as Post.get_draft()
+            # Create a temporary Post object to format the content properly
+            temp_post = Post(
+                title=title or "Temp",
+                subtitle=subtitle or "",
+                user_id=self.client.get_user_id()
+            )
+            
+            # Convert and add blocks
             blocks = self._convert_content_to_blocks(content, content_type)
             blocks = self._process_paywall_markers(content, blocks, content_type)
+            
+            # Remove duplicate title if updating with a title and first block matches
+            if title is not None and blocks and blocks[0].get('type') in ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six']:
+                first_block_text = self._extract_text_from_content(blocks[0].get('content', []))
+                if first_block_text.strip().lower() == title.strip().lower():
+                    logger.info(f"Removing duplicate title from updated content: {first_block_text}")
+                    blocks = blocks[1:]
+            
+            # Add blocks to Post object
+            self._add_blocks_to_post(temp_post, blocks)
+            
+            # Get the properly formatted draft data
+            temp_draft = temp_post.get_draft()
+            
             # Use draft_body for drafts, body for published
             if is_draft:
-                update_data["draft_body"] = self._format_blocks_for_api(blocks)
+                update_data["draft_body"] = temp_draft["draft_body"]
             else:
-                update_data["body"] = self._format_blocks_for_api(blocks)
+                update_data["body"] = temp_draft["draft_body"]  # Same format for both
         
         return self.client.put_draft(post_id, **update_data)
     
     async def publish_draft(
         self,
-        post_id: str,
-        scheduled_at: Optional[datetime] = None
+        post_id: str
     ) -> Dict[str, Any]:
-        """Publish a draft post immediately or schedule it
+        """Publish a draft post immediately
         
         Args:
             post_id: The ID of the draft to publish
-            scheduled_at: Optional datetime to schedule the post
             
         Returns:
-            The published/scheduled post data
+            The published post data
             
         Raises:
             ValueError: If invalid input provided
@@ -207,17 +237,7 @@ class PostHandler:
         if not post_id or not isinstance(post_id, str):
             raise ValueError("post_id must be a non-empty string")
         
-        if scheduled_at is not None:
-            if not isinstance(scheduled_at, datetime):
-                raise ValueError("scheduled_at must be a datetime object if provided")
-            
-            # Ensure scheduled time is in the future
-            if scheduled_at <= datetime.now(scheduled_at.tzinfo):
-                raise ValueError("scheduled_at must be in the future")
-        if scheduled_at:
-            return self.client.schedule_draft(post_id, scheduled_at)
-        else:
-            return self.client.publish_draft(post_id)
+        return self.client.publish_draft(post_id)
     
     async def list_drafts(self, limit: int = 10) -> List[Dict[str, Any]]:
         """List recent draft posts
@@ -506,37 +526,6 @@ class PostHandler:
             logger.error(f"Unexpected error in duplicate_post for post_id {post_id}: {str(e)}, type: {type(e)}")
             raise ValueError(f"Failed to duplicate post {post_id}: {str(e)}")
     
-    async def schedule_post(self, post_id: str, scheduled_at: datetime) -> Dict[str, Any]:
-        """Schedule a draft to be published at a specific time
-        
-        Args:
-            post_id: The ID of the draft to schedule
-            scheduled_at: The datetime to publish the post
-            
-        Returns:
-            The scheduled post data
-        """
-        # Input validation
-        if not isinstance(scheduled_at, datetime):
-            raise ValueError("scheduled_at must be a datetime object")
-        
-        # Ensure scheduled time is in the future
-        if scheduled_at <= datetime.now(scheduled_at.tzinfo):
-            raise ValueError("scheduled_at must be in the future")
-        
-        return self.client.schedule_draft(post_id, scheduled_at)
-    
-    async def unschedule_post(self, post_id: str) -> Dict[str, Any]:
-        """Unschedule a scheduled post (convert back to draft)
-        
-        Args:
-            post_id: The ID of the scheduled post
-            
-        Returns:
-            The unscheduled post data
-        """
-        return self.client.unschedule_draft(post_id)
-    
     async def get_sections(self) -> List[Dict[str, Any]]:
         """Get available sections/categories for organizing posts
         
@@ -587,6 +576,27 @@ class PostHandler:
                     raise e
                 raise SubstackAPIError(f"Unable to get subscriber count (both methods failed)")
     
+    def _clean_publication_url(self, url: str) -> str:
+        """Clean publication URL by removing API paths
+        
+        Args:
+            url: The URL to clean
+            
+        Returns:
+            Clean publication URL without API paths
+        """
+        if not url:
+            return url
+            
+        # Remove /api/v1 or /api/v1/ if present
+        clean_url = url.replace('/api/v1/', '/').replace('/api/v1', '')
+        
+        # Ensure it doesn't end with a slash
+        if clean_url.endswith('/'):
+            clean_url = clean_url[:-1]
+            
+        return clean_url
+    
     async def preview_draft(self, post_id: str) -> Dict[str, Any]:
         """Get a preview link for a draft post
         
@@ -597,50 +607,102 @@ class PostHandler:
             Preview information including shareable link
         """
         try:
-            # First get the draft to extract its slug
+            # First get the draft to check if it's published
             draft = self.client.get_draft(post_id)
                 
             if not isinstance(draft, dict):
                 logger.error(f"Unexpected draft response type: {type(draft)}")
                 raise ValueError(f"Invalid draft response")
-                
-            # Extract slug from draft
+            
+            # Extract slug from draft for published posts
             slug = draft.get('slug') or draft.get('draft_slug', '')
             
-            if not slug:
-                logger.warning(f"No slug found in draft {post_id}")
-                # Try prepublish_draft to generate slug
-                try:
-                    preview_data = self.client.prepublish_draft(post_id)
-                    logger.debug(f"prepublish_draft response type: {type(preview_data)}")
-                    
-                    if isinstance(preview_data, str):
-                        logger.error(f"prepublish_draft returned string error: {preview_data}")
-                    elif isinstance(preview_data, dict):
-                        slug = preview_data.get('slug') or preview_data.get('draft_slug', '')
-                except Exception as e:
-                    logger.error(f"prepublish_draft failed: {str(e)}")
-            
-            # Construct preview URL
-            preview_url = None
-            if slug and self.client.publication_url:
-                # Standard preview URL format
-                preview_url = f"{self.client.publication_url}/p/{slug}"
+            # Try prepublish_draft to see if it returns a preview URL
+            preview_url_from_api = None
+            try:
+                preview_data = self.client.prepublish_draft(post_id)
+                logger.debug(f"prepublish_draft response: {preview_data}")
                 
-                # Add draft_id parameter if it's actually a draft
-                if not draft.get('post_date'):  # It's a draft
-                    preview_url += f"?draft_id={post_id}"
+                if isinstance(preview_data, dict):
+                    # Check for various possible URL fields
+                    preview_url_from_api = (
+                        preview_data.get('preview_url') or 
+                        preview_data.get('preview_link') or
+                        preview_data.get('url') or
+                        preview_data.get('draft_url')
+                    )
+                    if preview_url_from_api:
+                        logger.info(f"Found preview URL from API: {preview_url_from_api}")
+                    
+                    # Also check for slug if we don't have one
+                    if not slug:
+                        slug = preview_data.get('slug') or preview_data.get('draft_slug', '')
+                        
+            except Exception as e:
+                logger.warning(f"prepublish_draft failed (will construct URL manually): {str(e)}")
             
-            # If we still don't have a URL, try one more format
+            # Check if this is actually a draft (not published)
+            # Check multiple fields that indicate published status
+            is_published = (
+                draft.get('post_date') is not None or 
+                draft.get('published_at') is not None or
+                draft.get('is_published', False) or
+                draft.get('published', False)
+            )
+            
+            # If we got a preview URL from the API, use it
+            if preview_url_from_api:
+                preview_url = preview_url_from_api
+                logger.info(f"Using preview URL from prepublish_draft API")
+            elif self.client.publication_url:
+                # Construct preview URL
+                if is_published and slug:
+                    # It's a published post, return the public URL
+                    base_url = self._clean_publication_url(self.client.publication_url)
+                    preview_url = f"{base_url}/p/{slug}"
+                    logger.info(f"Post {post_id} is published, returning public URL")
+                else:
+                    # It's a draft, construct the author-only edit/preview URL
+                    # Format: https://publication.substack.com/publish/post/{post_id}?back=%2Fpublish%2Fposts%2Fdrafts
+                    import urllib.parse
+                    
+                    base_url = self._clean_publication_url(self.client.publication_url)
+                    
+                    # Build query parameters
+                    params = {
+                        'back': '/publish/posts/drafts'
+                    }
+                    
+                    query_string = urllib.parse.urlencode(params)
+                    preview_url = f"{base_url}/publish/post/{post_id}?{query_string}"
+                    logger.info(f"Post {post_id} is a draft, returning author-only preview URL")
+            
+            # If we still don't have a URL, try edit URL format as fallback
             if not preview_url and self.client.publication_url:
                 # Fallback: use the edit URL format
-                preview_url = f"{self.client.publication_url}/publish/post/{post_id}"
+                base_url = self._clean_publication_url(self.client.publication_url)
+                preview_url = f"{base_url}/publish/post/{post_id}"
+                logger.info(f"Using fallback edit URL for post {post_id}")
+            
+            # Determine the type of URL for the message
+            if preview_url:
+                if "?postPreview=" in preview_url:
+                    message = f"Draft preview link (share for feedback): {preview_url}"
+                elif "/publish/post/" in preview_url:
+                    message = f"Author-only preview link (not shareable - you must be logged in): {preview_url}"
+                elif is_published:
+                    message = f"Published post link: {preview_url}"
+                else:
+                    message = f"Preview link: {preview_url}"
+            else:
+                message = "Unable to generate preview URL"
             
             return {
                 "post_id": post_id,
                 "preview_url": preview_url,
                 "title": draft.get('draft_title') or draft.get('title', 'Untitled'),
-                "message": f"Preview link: {preview_url}" if preview_url else "Unable to generate preview URL"
+                "is_published": is_published,
+                "message": message
             }
             
         except Exception as e:
@@ -1074,12 +1136,18 @@ class PostHandler:
                 post.add({'type': 'paywall'})
                 
             elif block_type == 'captioned-image':
-                # Use the captioned_image method
-                post.captioned_image(
-                    src=block.get('src', ''),
-                    alt=block.get('alt', ''),
-                    title=block.get('caption', '')
-                )
+                # Convert to paragraph with markdown - this is the only reliable way
+                image_src = block.get('src', '')
+                image_alt = block.get('alt', '')
+                image_caption = block.get('caption', '')
+                
+                # Create markdown image syntax
+                image_markdown = f"![{image_alt}]({image_src})"
+                if image_caption:
+                    image_markdown += f"\n\n*{image_caption}*"
+                
+                # Add as a regular paragraph
+                post.paragraph(image_markdown)
                 
             elif block_type == 'code':
                 # Code blocks - add as proper code_block type

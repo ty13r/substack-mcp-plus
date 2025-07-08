@@ -1,7 +1,7 @@
 {
   "name": "substack-mcp-plus",
   "version": "1.0.3",
-  "description": "Unofficial Substack MCP server. Born from frustration, built with AI. 14 tools, browser auth, rich text support. Not affiliated with Substack Inc.",
+  "description": "Unofficial Substack MCP server. Born from frustration, built with AI. 12 tools, browser auth, rich text support. Not affiliated with Substack Inc.",
   "type": "module",
   "main": "src/index.js",
   "bin": {
