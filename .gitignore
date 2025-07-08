@@ -47,10 +47,13 @@ ENV/
 env/
 .venv/
 
-# Test and debug files
-test_*.py
-debug_*.py
-*_test.py
+# Test and debug files (but not in tests/ directory)
+/test_*.py
+/debug_*.py
+/*_test.py
+/src/test_*.py
+/src/debug_*.py
+/src/*_test.py
 
 # Configuration files with potential sensitive data
 claude_desktop_config.json
