@@ -11,7 +11,7 @@
 
 ## 📋 Requirements
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Substack account credentials:
     - Email and password (recommended)
     - OR session token and user ID

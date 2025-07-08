@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added shareable preview links limitation to known issues
 - Documented that python-substack library hasn't been updated in 2+ years
 
+### Infrastructure
+- Fixed CI/CD pipeline - all tests now pass in GitHub Actions
+- Added unit and integration tests to version control (fixed .gitignore)
+- Fixed code formatting and linting issues across entire codebase
+
 ### Known Issues
 - Image rendering shows markdown syntax instead of rendered images
 - Subscriber count may show 0 even with subscribers (API limitation)  
