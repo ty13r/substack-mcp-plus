@@ -1,104 +1,238 @@
-# Claude Desktop Test Checklist for Substack MCP Plus
+# Claude Desktop MCP Test Checklist for Substack MCP Plus v1.0.3
 
-## Quick Test Order (Safest First)
+## Pre-Test Setup
 
-### 🟢 Safe Tools (Read-Only) - Test These First
-1. `list_drafts` - Shows your drafts
-2. `get_post_content` - Reads a draft
-3. `list_published` - Shows published posts  
-4. `get_sections` - Shows publication sections
-5. `get_subscriber_count` - Shows subscriber count
-6. `preview_draft` - Generates preview link
-7. `list_drafts_for_deletion` - Shows drafts with delete instructions
+1. **Clean Installation**
+   ```bash
+   # Uninstall current version
+   npm uninstall -g substack-mcp-plus
+   
+   # Clear npm cache
+   npm cache clean --force
+   
+   # Install fresh from local directory
+   npm install -g .
+   ```
 
-### 🟡 Medium Risk Tools (Create Content)
-8. `create_formatted_post` - Creates new drafts (with confirmation)
-9. `duplicate_post` - Copies existing posts (with confirmation)
-10. `upload_image` - Uploads images to CDN
+2. **Verify Installation**
+   ```bash
+   which substack-mcp-plus
+   # Should show: /opt/homebrew/bin/substack-mcp-plus
+   ```
 
-### 🔴 High Risk Tools (Modify/Delete Content)
-11. `update_post` - Updates existing drafts (with confirmation)
-12. `delete_draft` - Deletes drafts (with confirmation)
-13. `schedule_post` - Schedules for auto-publish (with confirmation)
-14. `publish_post` - PUBLISHES AND SENDS EMAILS (with confirmation)
+3. **Configure Claude Desktop**
+   - Remove existing substack-mcp-plus entry from Claude Desktop config
+   - Re-add with fresh configuration:
+   ```json
+   {
+     "mcpServers": {
+       "substack-mcp-plus": {
+         "command": "/opt/homebrew/bin/substack-mcp-plus",
+         "env": {
+           "SUBSTACK_PUBLICATION_URL": "https://neroaugustus.substack.com/"
+         }
+       }
+     }
+   }
+   ```
+   - Restart Claude Desktop completely (Quit and reopen)
 
-## Essential Test Scenarios
+4. **Authentication Setup**
+   ```bash
+   # Run setup command
+   substack-mcp-plus-setup
+   
+   # Should open browser for authentication
+   # Complete login process
+   # Verify success message
+   ```
 
-### 1. Test the Confirmation System
+## Tool Testing Checklist
+
+### 1. list_drafts ✓
+**Test**: "Can you list my drafts?"
+- [ ] Should return 5 drafts with titles and IDs
+- [ ] No errors or "Found 0 drafts"
+- [ ] IDs should be numeric
+
+### 2. list_published
+**Test**: "Show me my published posts"
+- [ ] Should return published posts (if any)
+- [ ] Should show publication dates
+- [ ] Should have different IDs than drafts
+
+### 3. get_post_content
+**Test**: "Read the content of draft ID: 167737151" (use actual ID from list_drafts)
+- [ ] Should show full formatted content
+- [ ] Should preserve markdown formatting
+- [ ] Should show title and subtitle
+
+### 4. create_formatted_post
+**Test 1**: "Create a draft post titled 'Test Post from Claude Desktop' with content 'This is a test post with **bold** and *italic* text.'"
+- [ ] Should ask for confirmation first
+- [ ] After confirming, should create draft
+- [ ] Should return new post ID
+
+**Test 2**: "Create a draft with markdown formatting:
 ```
-Say: "Create a draft titled 'Test' with content 'test'"
-EXPECT: ⚠️ CONFIRMATION REQUIRED ⚠️
-Say: "no"
-VERIFY: Nothing created
+Title: Markdown Test Post
+Content:
+# This is a heading
+This is a paragraph with **bold** and *italic* text.
 
-Say: "Create a draft titled 'Test' with content 'test'"  
-Say: "yes"
-VERIFY: Draft created
-```
+## Subheading
+- Bullet point 1
+- Bullet point 2
 
-### 2. Test Partial Updates
-```
-Say: "Update draft [ID] subtitle to 'New Subtitle Only'"
-EXPECT: Shows ONLY subtitle will change
-Say: "yes"
-VERIFY: Only subtitle changed on Substack.com
-```
+1. Numbered item 1
+2. Numbered item 2
 
-### 3. Test Rich Formatting
-```
-Create a draft with:
-# Header
-**Bold** and *italic*
-- List items
-```code block```
-> Quote
-<!--paywall-->
-Premium content
+> This is a blockquote
 
-VERIFY: All formatting appears correctly on Substack
-```
+\`\`\`python
+def hello():
+    print("Hello World")
+\`\`\`
+```"
+- [ ] Should preserve all formatting
+- [ ] Code blocks should work
+- [ ] Lists should format correctly
 
-### 4. Test Safety Features
-```
-For each risky tool:
-1. Try the action
-2. Get confirmation prompt
-3. Say "no" or "cancel"
-4. Verify nothing happened
-```
+### 5. update_post
+**Test**: "Update the test post we just created. Change the title to 'Updated Test Post'"
+- [ ] Should ask for confirmation
+- [ ] Should successfully update
+- [ ] Verify with list_drafts that title changed
 
-## Pre-Flight Checklist
+### 6. duplicate_post
+**Test**: "Duplicate the post with ID [use one from list_drafts]"
+- [ ] Should ask for confirmation
+- [ ] Should create new draft with "Copy of" prefix
+- [ ] Content should be identical
 
-- [ ] Claude Desktop restarted
-- [ ] MCP server shows in tools menu
-- [ ] Have a test draft ID ready
-- [ ] Have a test image file ready
-- [ ] Know your publication URL
+### 7. upload_image
+**Test**: "Upload this image: /Users/Matt/Desktop/test-image.png" (use any local image)
+- [ ] Should upload successfully
+- [ ] Should return Substack CDN URL
+- [ ] URL should start with https://substackcdn.com/
 
-## Post-Test Cleanup
+### 8. schedule_post
+**Test**: "Schedule the test post to publish tomorrow at 10 AM"
+- [ ] Should ask for confirmation
+- [ ] Should accept the scheduling
+- [ ] Should show scheduled time
 
-- [ ] Delete all test drafts
-- [ ] Check no accidental publishes
-- [ ] Document any issues found
-- [ ] Clean up uploaded test images
+### 9. preview_draft
+**Test**: "Generate a preview link for draft ID [use test post ID]"
+- [ ] Should return preview URL
+- [ ] URL should be clickable
+- [ ] Should include draft_id parameter
 
-## Red Flags (Stop Testing If These Occur)
+### 10. get_sections
+**Test**: "What sections are available in my publication?"
+- [ ] Should list any sections/categories
+- [ ] Should show section IDs
 
-- ❌ Any tool executes without confirmation when it should ask
-- ❌ Update_post changes more than specified fields  
-- ❌ Publish_post doesn't show clear warnings
-- ❌ Errors that expose credentials
-- ❌ Server crashes or hangs
+### 11. get_subscriber_count
+**Test**: "How many subscribers do I have?"
+- [ ] Should return subscriber count
+- [ ] Should show publication URL
 
-## Success Criteria
+### 12. delete_draft
+**Test**: "Delete the test post we created" (use the test post ID)
+- [ ] Should ask for confirmation with warning
+- [ ] After confirming, should delete
+- [ ] Verify with list_drafts it's gone
 
-✅ All 14 tools accessible in Claude Desktop
-✅ All confirmations work (can cancel with "no")
-✅ Partial updates only change specified fields
-✅ Rich text formatting preserved
-✅ No data loss or unexpected changes
-✅ Clear error messages for invalid operations
+### 13. list_drafts_for_deletion
+**Test**: "Show me all drafts with delete commands"
+- [ ] Should list all drafts with formatted delete commands
+- [ ] Should include last updated dates
+- [ ] Commands should have proper IDs
 
----
+### 14. publish_post
+**Test**: Only if you have a test draft ready
+"Publish draft ID [use a test draft]"
+- [ ] Should ask for confirmation with strong warning
+- [ ] Should explain email will be sent
+- [ ] (Only confirm if using test publication)
 
-⚠️ **REMEMBER**: publish_post sends emails to ALL subscribers. Only test on a test account or be VERY careful!
+## Error Handling Tests
+
+### Test Authentication Errors
+1. **Test**: Temporarily rename ~/.substack-mcp-plus/auth.json
+   ```bash
+   mv ~/.substack-mcp-plus/auth.json ~/.substack-mcp-plus/auth.json.bak
+   ```
+2. Try "list drafts" - should show authentication error
+3. Restore file:
+   ```bash
+   mv ~/.substack-mcp-plus/auth.json.bak ~/.substack-mcp-plus/auth.json
+   ```
+
+### Test Invalid Post IDs
+**Test**: "Read post ID 99999999999"
+- [ ] Should show clear error message
+- [ ] Should not crash
+
+### Test Network Issues
+**Test**: Turn off WiFi and try "list drafts"
+- [ ] Should show network error
+- [ ] Should not hang indefinitely
+
+## Performance Tests
+
+### Response Times
+- [ ] list_drafts should respond in < 3 seconds
+- [ ] get_post_content should respond in < 3 seconds
+- [ ] No operations should hang or timeout
+
+### Multiple Operations
+**Test**: Run several commands in sequence:
+1. List drafts
+2. Read a post
+3. List published
+4. Get subscriber count
+- [ ] All should work without needing restart
+- [ ] No memory/connection issues
+
+## Edge Cases
+
+### Special Characters
+**Test**: "Create a draft with title 'Test: Special "Characters" & Symbols! 🎉'"
+- [ ] Should handle quotes and special chars
+- [ ] Should preserve emoji
+
+### Empty Content
+**Test**: "Create a draft titled 'Empty Test' with no content"
+- [ ] Should show appropriate error
+
+### Large Content
+**Test**: Create a draft with very long content (paste a long article)
+- [ ] Should handle without truncation
+- [ ] Should complete successfully
+
+## Final Verification
+
+1. **Check Logs**
+   ```bash
+   tail -100 ~/Library/Logs/Claude/mcp-server-substack-mcp-plus.log
+   ```
+   - [ ] No Python tracebacks
+   - [ ] No "ERROR" level messages (except for tested errors)
+
+2. **Clean Test Data**
+   - [ ] Delete all test posts created during testing
+   - [ ] Verify original drafts remain intact
+
+## Sign-off
+
+- [ ] All core features working
+- [ ] Error handling appropriate
+- [ ] Performance acceptable
+- [ ] No crashes or hangs
+- [ ] Ready for v1.0.3 release
+
+**Tested by**: ________________  
+**Date**: ________________  
+**Claude Desktop Version**: ________________
