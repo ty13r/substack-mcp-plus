@@ -41,7 +41,7 @@ We take security seriously. If you discover a security vulnerability in Substack
 Security vulnerabilities should be reported privately to prevent exploitation.
 
 ### 2. Report Via Email
-Send details to: [INSERT SECURITY EMAIL HERE]
+Send details to: ruggd@proton.me
 
 Include:
 - Description of the vulnerability
