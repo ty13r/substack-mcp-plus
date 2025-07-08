@@ -240,10 +240,36 @@ class PostHandler:
         # python-substack returns a generator, convert to list
         # The API returns all posts, so we need to filter for drafts only
         try:
-            all_posts = list(self.client.get_drafts(limit=min(limit * 3, 50)))  # Get more to ensure we have enough drafts, but cap at 50
-            logger.debug(f"Retrieved {len(all_posts)} posts from API")
+            # Debug: Let's see what client we're using
+            logger.info(f"Client type: {type(self.client)}")
+            logger.info(f"Client class name: {self.client.__class__.__name__}")
+            
+            # Check publication info
+            if hasattr(self.client, 'client') and hasattr(self.client.client, 'publication_id'):
+                logger.info(f"Publication ID: {self.client.client.publication_id}")
+            if hasattr(self.client, 'client') and hasattr(self.client.client, 'subdomain'):
+                logger.info(f"Subdomain: {self.client.client.subdomain}")
+            
+            # Try to get the raw API response
+            raw_result = self.client.get_drafts(limit=min(limit * 3, 50))
+            logger.info(f"Raw result type: {type(raw_result)}")
+            
+            all_posts = list(raw_result)  # Get more to ensure we have enough drafts, but cap at 50
+            logger.info(f"Retrieved {len(all_posts)} posts from API")
+            
+            # If empty, let's try a different approach
+            if len(all_posts) == 0:
+                logger.warning("get_drafts returned empty, trying direct API call")
+                # Check if we have the underlying client
+                if hasattr(self.client, 'client'):
+                    logger.info("Found underlying client, checking its properties")
+                    inner_client = self.client.client
+                    logger.info(f"Inner client type: {type(inner_client)}")
+                    logger.info(f"Inner client dir: {[x for x in dir(inner_client) if not x.startswith('_')][:10]}")
         except Exception as e:
-            logger.error(f"Error getting drafts: {e}")
+            logger.error(f"Error getting drafts: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return []
         
         drafts = []
@@ -256,17 +282,10 @@ class PostHandler:
             logger.debug(f"Post has title: {post.get('title') is not None}")
             logger.debug(f"Post has post_date: {post.get('post_date') is not None}")
             
-            # Check if it's actually a draft (not published)
-            # Drafts have type='draft' or no post_date
-            is_draft = (
-                post.get('type') == 'draft' or 
-                (not post.get('post_date') and (post.get('draft_title') or post.get('title')))
-            )
-            
-            if is_draft:
-                drafts.append(post)
-                if len(drafts) >= limit:
-                    break
+            # For debugging: add ALL posts to see what we're getting
+            drafts.append(post)
+            if len(drafts) >= limit:
+                break
         
         logger.info(f"Returning {len(drafts)} drafts")
         return drafts

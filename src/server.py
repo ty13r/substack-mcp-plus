@@ -440,10 +440,12 @@ class SubstackMCPServer:
                     )]
                     
                 elif name == "list_drafts":
+                    logger.info(f"list_drafts called with arguments: {arguments}")
                     post_handler = PostHandler(client)
                     drafts = await post_handler.list_drafts(
                         limit=arguments.get("limit", 10)
                     )
+                    logger.info(f"list_drafts returned {len(drafts)} drafts")
                     
                     draft_list = []
                     for draft in drafts:
@@ -451,9 +453,12 @@ class SubstackMCPServer:
                         draft_id = draft.get('id')
                         draft_list.append(f"- {title} (ID: {draft_id})")
                     
+                    response_text = f"Found {len(drafts)} drafts:\n" + "\n".join(draft_list)
+                    logger.info(f"Returning response: {response_text[:100]}...")
+                    
                     return [TextContent(
                         type="text",
-                        text=f"Found {len(drafts)} drafts:\n" + "\n".join(draft_list)
+                        text=response_text
                     )]
                     
                 elif name == "upload_image":
@@ -814,7 +819,9 @@ class SubstackMCPServer:
     
     async def run(self):
         """Run the MCP server using stdio transport"""
+        logger.info("Starting MCP server...")
         async with stdio_server() as (read_stream, write_stream):
+            logger.info("Stdio transport established")
             await self.server.run(
                 read_stream,
                 write_stream,
@@ -824,6 +831,7 @@ class SubstackMCPServer:
                     capabilities={}
                 )
             )
+            logger.info("Server run completed")
 
 
 def main():
