@@ -820,7 +820,7 @@ class SubstackMCPServer:
                 InitializationOptions(
                     server_name="substack-mcp-plus",
                     server_version="1.0.3",
-                    capabilities={},
+                    capabilities={"tools": {}},
                 ),
             )
             logger.info("Server run completed")
