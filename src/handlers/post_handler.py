@@ -1287,9 +1287,8 @@ class PostHandler:
             content = block.get("content")
 
             if block_type == "paragraph":
-                # Extract text and add as single paragraph
-                text_content = self._extract_text_from_content(content)
-                post.paragraph(text_content)
+                # Pass content list directly to preserve inline formatting (bold, italic, links)
+                post.paragraph(content)
 
             elif block_type in [
                 "heading-one",
