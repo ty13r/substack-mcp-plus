@@ -1321,18 +1321,9 @@ class PostHandler:
                 post.add({"type": "paywall"})
 
             elif block_type == "captioned-image":
-                # Convert to paragraph with markdown - this is the only reliable way
                 image_src = block.get("src", "")
                 image_alt = block.get("alt", "")
-                image_caption = block.get("caption", "")
-
-                # Create markdown image syntax
-                image_markdown = f"![{image_alt}]({image_src})"
-                if image_caption:
-                    image_markdown += f"\n\n*{image_caption}*"
-
-                # Add as a regular paragraph
-                post.paragraph(image_markdown)
+                post.add({"type": "captionedImage", "src": image_src, "alt": image_alt})
 
             elif block_type == "code":
                 # Code blocks - add as proper code_block type
